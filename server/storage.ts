@@ -8,7 +8,7 @@ import {
   type Call,
   type CallWithProperty,
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export interface IStorage {
@@ -18,6 +18,7 @@ export interface IStorage {
   createCall(call: InsertCall): Promise<Call>;
   createProperty(property: InsertProperty): Promise<Property>;
   deleteProperty(id: number): Promise<void>;
+  backfillUniqueIndexes(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -50,7 +51,6 @@ export class DatabaseStorage implements IStorage {
 
   async createProperty(property: InsertProperty): Promise<Property> {
     try {
-      // Map frontend camelCase fields to database snake_case columns explicitly
       const [newProperty] = await db
         .insert(properties)
         .values({
@@ -58,11 +58,11 @@ export class DatabaseStorage implements IStorage {
           postcode: property.postcode,
           price: property.price,
           num_beds: property.num_beds,
-          days_on_market: property.daysOnMarket,
+          daysOnMarket: property.daysOnMarket,
           link: property.link,
-          needs_work: property.needsWork,
-          unique_index: nanoid(10),
-        } as any)
+          needsWork: property.needsWork,
+          uniqueIndex: nanoid(10),
+        })
         .returning();
       return newProperty;
     } catch (err) {
@@ -73,6 +73,24 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProperty(id: number): Promise<void> {
     await db.delete(properties).where(eq(properties.id, id));
+  }
+
+  async backfillUniqueIndexes(): Promise<void> {
+    const rows = await db
+      .select({ id: properties.id })
+      .from(properties)
+      .where(isNull(properties.uniqueIndex));
+
+    for (const row of rows) {
+      await db
+        .update(properties)
+        .set({ uniqueIndex: nanoid(10) })
+        .where(eq(properties.id, row.id));
+    }
+
+    if (rows.length > 0) {
+      console.log(`Backfilled uniqueIndex for ${rows.length} properties`);
+    }
   }
 }
 

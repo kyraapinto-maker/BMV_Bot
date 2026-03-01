@@ -36,6 +36,10 @@ export async function registerRoutes(
     console.error("Seeding failed:", err.message);
   });
 
+  storage.backfillUniqueIndexes().catch((err) => {
+    console.error("Backfill failed:", err.message);
+  });
+
   app.get(api.properties.list.path, async (req, res) => {
     try {
       const propertiesList = await storage.getProperties();
