@@ -1,9 +1,12 @@
 import { db } from "./db";
 import {
-  properties, calls,
-  type InsertProperty, type Property,
-  type InsertCall, type Call,
-  type CallWithProperty
+  properties,
+  calls,
+  type InsertProperty,
+  type Property,
+  type InsertCall,
+  type Call,
+  type CallWithProperty,
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
@@ -22,16 +25,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProperty(id: number): Promise<Property | undefined> {
-    const [property] = await db.select().from(properties).where(eq(properties.id, id));
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id));
     return property;
   }
 
   async getCalls(): Promise<CallWithProperty[]> {
     const records = await db.query.calls.findMany({
       with: {
-        property: true
+        property: true,
       },
-      orderBy: [desc(calls.createdAt)]
+      orderBy: [desc(calls.createdAt)],
     });
     return records;
   }
@@ -42,8 +48,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProperty(property: InsertProperty): Promise<Property> {
-    const [newProperty] = await db.insert(properties).values(property).returning();
-    return newProperty;
+    console.log("Creating property", property);
+    try {
+      const [newProperty] = await db
+        .insert(properties)
+        .values(property)
+        .returning();
+      return newProperty;
+    } catch (err) {
+      console.error("Error creating property:", err);
+    }
+    throw new Error("Failed to create property");
   }
 
   async deleteProperty(id: number): Promise<void> {

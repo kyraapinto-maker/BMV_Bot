@@ -13,7 +13,7 @@ async function seedDatabase() {
       price: 250000,
       daysOnMarket: 120,
       link: "https://rightmove.co.uk/property/1",
-      needsWork: true
+      needsWork: true,
     });
     await storage.createProperty({
       address: "45 Long Road, Manchester",
@@ -21,7 +21,7 @@ async function seedDatabase() {
       price: 180000,
       daysOnMarket: 200,
       link: "https://zoopla.co.uk/property/2",
-      needsWork: true
+      needsWork: true,
     });
     await storage.createProperty({
       address: "70 High Street, Birmingham",
@@ -29,18 +29,19 @@ async function seedDatabase() {
       price: 310000,
       daysOnMarket: 95,
       link: "https://rightmove.co.uk/property/3",
-      needsWork: true
+      needsWork: true,
     });
   }
 }
 
 export async function registerRoutes(
   httpServer: Server,
-  app: Express
+  app: Express,
 ): Promise<Server> {
-
   // Seed on startup
-  seedDatabase().catch(console.error);
+  seedDatabase().catch(err => {
+    console.error("Seeding failed:", err.message);
+  });
 
   app.get(api.properties.list.path, async (req, res) => {
     const propertiesList = await storage.getProperties();
@@ -54,7 +55,7 @@ export async function registerRoutes(
     }
 
     // Simulate sourcing properties
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const results = [
       {
@@ -63,7 +64,7 @@ export async function registerRoutes(
         price: 200000 + Math.floor(Math.random() * 100000),
         daysOnMarket: Math.floor(Math.random() * 200),
         link: "https://rightmove.co.uk/property/s1",
-        needsWork: true
+        needsWork: true,
       },
       {
         address: `Probate Sale, ${postcode}`,
@@ -71,14 +72,16 @@ export async function registerRoutes(
         price: 150000 + Math.floor(Math.random() * 100000),
         daysOnMarket: Math.floor(Math.random() * 300),
         link: "https://zoopla.co.uk/property/s2",
-        needsWork: true
-      }
+        needsWork: true,
+      },
     ];
     res.status(200).json(results);
   });
 
   app.post(api.properties.create.path, async (req, res) => {
     try {
+      console.log(req);
+      console.log(req.body);
       const input = api.properties.create.input.parse(req.body);
       const property = await storage.createProperty(input);
       res.status(201).json(property);
@@ -86,7 +89,7 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) {
         return res.status(400).json({
           message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
+          field: err.errors[0].path.join("."),
         });
       }
       throw err;
@@ -102,7 +105,7 @@ export async function registerRoutes(
   app.get(api.properties.get.path, async (req, res) => {
     const property = await storage.getProperty(Number(req.params.id));
     if (!property) {
-      return res.status(404).json({ message: 'Property not found' });
+      return res.status(404).json({ message: "Property not found" });
     }
     res.status(200).json(property);
   });
@@ -115,43 +118,46 @@ export async function registerRoutes(
   app.post(api.calls.create.path, async (req, res) => {
     try {
       const propertyId = Number(req.params.id);
-      
+
       const property = await storage.getProperty(propertyId);
       if (!property) {
-        return res.status(404).json({ message: 'Property not found' });
+        return res.status(404).json({ message: "Property not found" });
       }
 
       // Simulate a call using our "voice agent"
       // Wait for 1.5s to simulate the "call"
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const results = ['viewing_booked', 'no_answer', 'not_interested'];
+      const results = ["viewing_booked", "no_answer", "not_interested"];
       const randomResult = results[Math.floor(Math.random() * results.length)];
-      
-      const viewingDate = randomResult === 'viewing_booked' 
-        ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
-        : null;
 
-      const offeredPrice = randomResult === 'viewing_booked'
-        ? Math.floor(property.price * 0.85)
-        : null;
+      const viewingDate =
+        randomResult === "viewing_booked"
+          ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          : null;
+
+      const offeredPrice =
+        randomResult === "viewing_booked"
+          ? Math.floor(property.price * 0.85)
+          : null;
 
       const comments = [
         "Spoke to agent Sarah, she confirmed the seller is motivated.",
         "Left a voicemail for the lead negotiator.",
         "Agent mentioned there are several other interested parties.",
         "Property has structural issues as suspected.",
-        "Viewing scheduled for next Tuesday."
+        "Viewing scheduled for next Tuesday.",
       ];
-      const randomComment = comments[Math.floor(Math.random() * comments.length)];
+      const randomComment =
+        comments[Math.floor(Math.random() * comments.length)];
 
       const callData = {
         propertyId,
-        status: 'completed',
+        status: "completed",
         result: randomResult,
         offeredPrice,
         comment: randomComment,
-        viewingDate
+        viewingDate,
       };
 
       const newCall = await storage.createCall(callData);
@@ -160,7 +166,7 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) {
         return res.status(400).json({
           message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
+          field: err.errors[0].path.join("."),
         });
       }
       throw err;
