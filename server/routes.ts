@@ -12,7 +12,7 @@ async function seedDatabase() {
       postcode: "E1 6AN",
       price: 250000,
       daysOnMarket: 120,
-      numBeds: 2,
+      num_beds: 2,
       link: "https://rightmove.co.uk/property/1",
       needsWork: true,
     });
@@ -21,7 +21,7 @@ async function seedDatabase() {
       postcode: "M1 1AA",
       price: 180000,
       daysOnMarket: 200,
-      numBeds: 3,
+      num_beds: 3,
       link: "https://zoopla.co.uk/property/2",
       needsWork: true,
     });
@@ -42,7 +42,8 @@ export async function registerRoutes(
       res.status(200).json(propertiesList);
     } catch (error) {
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Internal Server Error",
+        message:
+          error instanceof Error ? error.message : "Internal Server Error",
       });
     }
   });
@@ -61,7 +62,7 @@ export async function registerRoutes(
         postcode: postcode,
         price: 200000 + Math.floor(Math.random() * 100000),
         daysOnMarket: Math.floor(Math.random() * 200),
-        numBeds: 2 + Math.floor(Math.random() * 2),
+        num_beds: 2 + Math.floor(Math.random() * 2),
         link: "https://rightmove.co.uk/property/s1",
         needsWork: true,
       },
@@ -70,7 +71,7 @@ export async function registerRoutes(
         postcode: postcode,
         price: 150000 + Math.floor(Math.random() * 100000),
         daysOnMarket: Math.floor(Math.random() * 300),
-        numBeds: 3 + Math.floor(Math.random() * 2),
+        num_beds: 3 + Math.floor(Math.random() * 2),
         link: "https://zoopla.co.uk/property/s2",
         needsWork: true,
       },
@@ -80,12 +81,12 @@ export async function registerRoutes(
 
   app.post(api.properties.create.path, async (req, res) => {
     try {
-      // Ensure numBeds is mapped correctly from possible num_bed or numBeds
+      // Ensure num_beds is mapped correctly from possible num_bed or num_beds
       const body = { ...req.body };
-      if (body.num_bed !== undefined && body.numBeds === undefined) {
-        body.numBeds = body.num_bed;
+      if (body.num_bed !== undefined && body.num_beds === undefined) {
+        body.num_beds = body.num_bed;
       }
-      
+
       const input = api.properties.create.input.parse(body);
       const property = await storage.createProperty(input);
       res.status(201).json(property);

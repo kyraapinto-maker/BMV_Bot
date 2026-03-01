@@ -112,7 +112,7 @@ export default function Sourcing() {
                   {prop.address}
                 </CardTitle>
                 <CardTitle className="text-lg font-bold leading-tight mt-2">
-                  {prop.num_beds?.toLocaleString()}
+                  {prop.num_beds?.toLocaleString()} bedrooms
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
