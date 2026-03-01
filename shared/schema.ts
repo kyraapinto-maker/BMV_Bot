@@ -6,9 +6,10 @@ import { z } from "zod";
 export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
   address: text("address").notNull(),
-  postcode: text("postcode").notNull(),
+  postcode: text("postcode"),
   price: integer("price").notNull(),
-  daysOnMarket: integer("days_on_market").notNull(),
+  num_beds: integer("num_beds"),
+  daysOnMarket: integer("days_on_market"),
   link: text("link").notNull(),
   needsWork: boolean("needs_work").default(true),
 });
