@@ -8,7 +8,7 @@ export const properties = pgTable("properties", {
   address: text("address").notNull(),
   postcode: text("postcode"),
   price: integer("price").notNull(),
-  num_beds: integer("num_beds"),
+  numBeds: integer("num_beds"),
   daysOnMarket: integer("days_on_market"),
   link: text("link").notNull(),
   needsWork: boolean("needs_work").default(true),

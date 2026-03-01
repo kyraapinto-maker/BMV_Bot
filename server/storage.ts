@@ -48,17 +48,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProperty(property: InsertProperty): Promise<Property> {
-    console.log("Creating property", property);
     try {
+      // Map frontend camelCase fields to database snake_case columns explicitly
       const [newProperty] = await db
         .insert(properties)
-        .values(property)
+        .values({
+          address: property.address,
+          postcode: property.postcode,
+          price: property.price,
+          num_beds: property.numBeds,
+          days_on_market: property.daysOnMarket,
+          link: property.link,
+          needs_work: property.needsWork,
+        } as any)
         .returning();
       return newProperty;
     } catch (err) {
       console.error("Error creating property:", err);
+      throw new Error("Failed to create property");
     }
-    throw new Error("Failed to create property");
   }
 
   async deleteProperty(id: number): Promise<void> {

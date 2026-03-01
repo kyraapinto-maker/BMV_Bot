@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { api, buildUrl } from "@shared/routes";
+import { api } from "@shared/routes";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Property } from "@shared/schema";
 
 export default function Sourcing() {
   const [postcode, setPostcode] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<Partial<Property>[]>([]);
+  const [results, setResults] = useState<any[]>([]);
   const { toast } = useToast();
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -21,17 +21,12 @@ export default function Sourcing() {
 
     setIsSearching(true);
     try {
-      console.log(
-        "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/?" +
-          `?postcode=${encodeURIComponent(postcode)}`,
-      );
       const res = await fetch(
         "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/" +
           `?postcode=${encodeURIComponent(postcode)}`,
       );
       if (!res.ok) throw new Error("Search failed");
       const data = await res.json();
-      console.log(data);
       setResults(data);
     } catch (error) {
       toast({
@@ -44,8 +39,19 @@ export default function Sourcing() {
     }
   };
 
-  const handleAdd = async (property: Partial<Property>) => {
+  const handleAdd = async (rawProp: any) => {
     try {
+      // Map API fields to our expected insert schema
+      const property = {
+        address: rawProp.address,
+        postcode: rawProp.postcode,
+        price: rawProp.price,
+        numBeds: rawProp.num_bed || rawProp.numBeds,
+        daysOnMarket: rawProp.daysOnMarket,
+        link: rawProp.link,
+        needsWork: true
+      };
+
       await apiRequest("POST", api.properties.create.path, property);
       queryClient.invalidateQueries({ queryKey: [api.properties.list.path] });
       toast({
@@ -111,6 +117,11 @@ export default function Sourcing() {
                 <CardTitle className="text-lg font-bold leading-tight mt-2">
                   {prop.address}
                 </CardTitle>
+                {(prop.num_bed || prop.numBeds) && (
+                  <p className="text-sm text-muted-foreground">
+                    {prop.num_bed || prop.numBeds} Bedrooms
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm">
