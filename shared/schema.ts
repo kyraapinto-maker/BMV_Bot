@@ -1,4 +1,12 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  decimal,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -8,17 +16,20 @@ export const properties = pgTable("properties", {
   address: text("address").notNull(),
   postcode: text("postcode"),
   price: integer("price").notNull(),
-  numBeds: integer("num_beds"),
+  num_beds: integer("num_beds"),
   daysOnMarket: integer("days_on_market"),
   link: text("link").notNull(),
   needsWork: boolean("needs_work").default(true),
+  uniqueIndex: text("unique_index")
 });
 
 export const calls = pgTable("calls", {
   id: serial("id").primaryKey(),
-  propertyId: integer("property_id").references(() => properties.id, { onDelete: 'cascade' }).notNull(),
-  status: text("status").notNull(), 
-  result: text("result"), 
+  propertyId: integer("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .notNull(),
+  status: text("status").notNull(), // 'completed', 'failed', 'calling'
+  result: text("result"), // 'viewing_booked', 'no_answer', 'not_interested'
   offeredPrice: integer("offered_price"),
   comment: text("comment"),
   viewingDate: timestamp("viewing_date"),
@@ -36,14 +47,19 @@ export const callsRelations = relations(calls, ({ one }) => ({
   }),
 }));
 
-export const insertPropertySchema = createInsertSchema(properties).omit({ id: true });
-export const insertCallSchema = createInsertSchema(calls).omit({ id: true, createdAt: true });
+export const insertPropertySchema = createInsertSchema(properties).omit({
+  id: true,
+});
+export const insertCallSchema = createInsertSchema(calls).omit({
+  id: true,
+  createdAt: true,
+});
 
 export type Property = typeof properties.$inferSelect;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
 
-export type Call = typeof properties.$inferSelect;
+export type Call = typeof calls.$inferSelect;
 export type InsertCall = z.infer<typeof insertCallSchema>;
 
-export type PropertyWithCalls = Property & { calls: any[] };
-export type CallWithProperty = any & { property: Property };
+export type PropertyWithCalls = Property & { calls: Call[] };
+export type CallWithProperty = Call & { property: Property };

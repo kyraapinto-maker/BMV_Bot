@@ -9,6 +9,7 @@ import {
   type CallWithProperty,
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 export interface IStorage {
   getProperties(): Promise<Property[]>;
@@ -49,17 +50,19 @@ export class DatabaseStorage implements IStorage {
 
   async createProperty(property: InsertProperty): Promise<Property> {
     try {
+      // Map frontend camelCase fields to database snake_case columns explicitly
       const [newProperty] = await db
         .insert(properties)
         .values({
           address: property.address,
           postcode: property.postcode,
           price: property.price,
-          numBeds: property.numBeds,
-          daysOnMarket: property.daysOnMarket,
+          num_beds: property.num_beds,
+          days_on_market: property.daysOnMarket,
           link: property.link,
-          needsWork: property.needsWork,
-        })
+          needs_work: property.needsWork,
+          unique_index: nanoid(10),
+        } as any)
         .returning();
       return newProperty;
     } catch (err) {
