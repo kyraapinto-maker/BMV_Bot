@@ -49,18 +49,17 @@ export class DatabaseStorage implements IStorage {
 
   async createProperty(property: InsertProperty): Promise<Property> {
     try {
-      // Map frontend camelCase fields to database snake_case columns explicitly
       const [newProperty] = await db
         .insert(properties)
         .values({
           address: property.address,
           postcode: property.postcode,
           price: property.price,
-          num_beds: property.numBeds,
-          days_on_market: property.daysOnMarket,
+          numBeds: property.numBeds,
+          daysOnMarket: property.daysOnMarket,
           link: property.link,
-          needs_work: property.needsWork,
-        } as any)
+          needsWork: property.needsWork,
+        })
         .returning();
       return newProperty;
     } catch (err) {

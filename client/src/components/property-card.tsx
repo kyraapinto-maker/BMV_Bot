@@ -48,6 +48,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <h3 className="font-bold text-lg font-display leading-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors">
               {property.address}
             </h3>
+            {property.numBeds !== null && property.numBeds !== undefined && (
+              <p className="text-sm text-muted-foreground font-medium">
+                {property.numBeds} Bedrooms
+              </p>
+            )}
           </div>
           {property.needsWork && (
             <Badge variant="secondary" className="bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 border-orange-500/20 shrink-0 font-semibold shadow-none">

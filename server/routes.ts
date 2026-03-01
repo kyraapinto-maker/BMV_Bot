@@ -32,7 +32,7 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express,
 ): Promise<Server> {
-  seedDatabase().catch(err => {
+  seedDatabase().catch((err) => {
     console.error("Seeding failed:", err.message);
   });
 
@@ -41,7 +41,9 @@ export async function registerRoutes(
       const propertiesList = await storage.getProperties();
       res.status(200).json(propertiesList);
     } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : "Internal Server Error" });
+      res.status(500).json({
+        message: error instanceof Error ? error.message : "Internal Server Error",
+      });
     }
   });
 
@@ -78,7 +80,13 @@ export async function registerRoutes(
 
   app.post(api.properties.create.path, async (req, res) => {
     try {
-      const input = api.properties.create.input.parse(req.body);
+      // Ensure numBeds is mapped correctly from possible num_bed or numBeds
+      const body = { ...req.body };
+      if (body.num_bed !== undefined && body.numBeds === undefined) {
+        body.numBeds = body.num_bed;
+      }
+      
+      const input = api.properties.create.input.parse(body);
       const property = await storage.createProperty(input);
       res.status(201).json(property);
     } catch (err) {
@@ -88,7 +96,9 @@ export async function registerRoutes(
           field: err.errors[0].path.join("."),
         });
       }
-      res.status(500).json({ message: err instanceof Error ? err.message : "Internal Server Error" });
+      res.status(500).json({
+        message: err instanceof Error ? err.message : "Internal Server Error",
+      });
     }
   });
 
@@ -122,15 +132,30 @@ export async function registerRoutes(
       await new Promise((resolve) => setTimeout(resolve, 1500));
       const results = ["viewing_booked", "no_answer", "not_interested"];
       const randomResult = results[Math.floor(Math.random() * results.length)];
-      const viewingDate = randomResult === "viewing_booked" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null;
-      const offeredPrice = randomResult === "viewing_booked" ? Math.floor(property.price * 0.85) : null;
+      const viewingDate =
+        randomResult === "viewing_booked"
+          ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          : null;
+      const offeredPrice =
+        randomResult === "viewing_booked"
+          ? Math.floor(property.price * 0.85)
+          : null;
       const randomComment = "Agent spoke to owner about the renovation needs.";
 
-      const callData = { propertyId, status: "completed", result: randomResult, offeredPrice, comment: randomComment, viewingDate };
+      const callData = {
+        propertyId,
+        status: "completed",
+        result: randomResult,
+        offeredPrice,
+        comment: randomComment,
+        viewingDate,
+      };
       const newCall = await storage.createCall(callData);
       res.status(201).json(newCall);
     } catch (err) {
-      res.status(500).json({ message: err instanceof Error ? err.message : "Internal Server Error" });
+      res.status(500).json({
+        message: err instanceof Error ? err.message : "Internal Server Error",
+      });
     }
   });
 
