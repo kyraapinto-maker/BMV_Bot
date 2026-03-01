@@ -1,16 +1,34 @@
-import { Clock, MapPin, ExternalLink, Sparkles, Phone } from "lucide-react";
+import { Clock, MapPin, ExternalLink, Sparkles, Phone, Trash2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { type Property } from "@shared/schema";
 import { useCreateCall } from "@/hooks/use-calls";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { api, buildUrl } from "@shared/routes";
 
 interface PropertyCardProps {
   property: Property;
 }
 
 export function PropertyCard({ property }: PropertyCardProps) {
-  const { mutate: initiateCall, isPending } = useCreateCall();
+  const { toast } = useToast();
+  const { mutate: initiateCall, isPending: isCalling } = useCreateCall();
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", buildUrl(api.properties.delete.path, { id: property.id }));
+    },
+    onSuccess: () => {
+      toast({
+        title: "Property removed",
+        description: "The listing has been taken off your dashboard.",
+      });
+      queryClient.invalidateQueries({ queryKey: [api.properties.list.path] });
+    },
+  });
 
   const formattedPrice = new Intl.NumberFormat('en-GB', {
     style: 'currency',
@@ -59,33 +77,47 @@ export function PropertyCard({ property }: PropertyCardProps) {
       </CardContent>
 
       <CardFooter className="p-5 pt-4 border-t border-border/40 bg-muted/20 gap-3">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="shrink-0 rounded-xl"
-          asChild
-        >
-          <a href={property.link} target="_blank" rel="noopener noreferrer" aria-label="View listing">
-            <ExternalLink className="w-4 h-4" />
-          </a>
-        </Button>
-        <Button 
-          className="flex-1 w-full rounded-xl shadow-md shadow-primary/20 transition-all active:scale-[0.98]"
-          onClick={() => initiateCall(property.id)}
-          disabled={isPending}
-        >
-          {isPending ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-              <span>Connecting...</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 font-semibold">
-              <Phone className="w-4 h-4" />
-              <span>Call Agency</span>
-            </div>
-          )}
-        </Button>
+        <div className="flex gap-2 w-full">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="shrink-0 rounded-xl"
+            asChild
+          >
+            <a href={property.link} target="_blank" rel="noopener noreferrer" aria-label="View listing">
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="shrink-0 rounded-xl hover:bg-destructive/5 hover:text-destructive transition-colors"
+            onClick={() => deleteMutation.mutate()}
+            disabled={deleteMutation.isPending}
+            aria-label="Remove property"
+          >
+            {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          </Button>
+
+          <Button 
+            className="flex-1 rounded-xl shadow-md shadow-primary/20 transition-all active:scale-[0.98]"
+            onClick={() => initiateCall(property.id)}
+            disabled={isCalling}
+          >
+            {isCalling ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                <span>Connecting...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 font-semibold">
+                <Phone className="w-4 h-4" />
+                <span>Call Agency</span>
+              </div>
+            )}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

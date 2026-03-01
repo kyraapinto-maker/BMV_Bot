@@ -23,6 +23,31 @@ export const api = {
         200: z.custom<typeof properties.$inferSelect>(),
         404: errorSchemas.notFound,
       },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/properties' as const,
+      input: insertPropertySchema,
+      responses: {
+        201: z.custom<typeof properties.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/properties/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
+        404: errorSchemas.notFound,
+      },
+    },
+    search: {
+      method: 'GET' as const,
+      path: '/api/properties/search' as const,
+      input: z.object({ postcode: z.string() }),
+      responses: {
+        200: z.array(z.custom<typeof properties.$inferSelect>()),
+      },
     }
   },
   calls: {

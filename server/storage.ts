@@ -13,6 +13,7 @@ export interface IStorage {
   getCalls(): Promise<CallWithProperty[]>;
   createCall(call: InsertCall): Promise<Call>;
   createProperty(property: InsertProperty): Promise<Property>;
+  deleteProperty(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -43,6 +44,10 @@ export class DatabaseStorage implements IStorage {
   async createProperty(property: InsertProperty): Promise<Property> {
     const [newProperty] = await db.insert(properties).values(property).returning();
     return newProperty;
+  }
+
+  async deleteProperty(id: number): Promise<void> {
+    await db.delete(properties).where(eq(properties.id, id));
   }
 }
 

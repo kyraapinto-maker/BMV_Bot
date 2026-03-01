@@ -47,6 +47,58 @@ export async function registerRoutes(
     res.status(200).json(propertiesList);
   });
 
+  app.get(api.properties.search.path, async (req, res) => {
+    const postcode = req.query.postcode as string;
+    if (!postcode) {
+      return res.status(400).json({ message: "Postcode is required" });
+    }
+
+    // Simulate sourcing properties
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const results = [
+      {
+        address: `Modernization Project, ${postcode}`,
+        postcode: postcode,
+        price: 200000 + Math.floor(Math.random() * 100000),
+        daysOnMarket: Math.floor(Math.random() * 200),
+        link: "https://rightmove.co.uk/property/s1",
+        needsWork: true
+      },
+      {
+        address: `Probate Sale, ${postcode}`,
+        postcode: postcode,
+        price: 150000 + Math.floor(Math.random() * 100000),
+        daysOnMarket: Math.floor(Math.random() * 300),
+        link: "https://zoopla.co.uk/property/s2",
+        needsWork: true
+      }
+    ];
+    res.status(200).json(results);
+  });
+
+  app.post(api.properties.create.path, async (req, res) => {
+    try {
+      const input = api.properties.create.input.parse(req.body);
+      const property = await storage.createProperty(input);
+      res.status(201).json(property);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      throw err;
+    }
+  });
+
+  app.delete(api.properties.delete.path, async (req, res) => {
+    const id = Number(req.params.id);
+    await storage.deleteProperty(id);
+    res.status(200).json({ message: "Property removed" });
+  });
+
   app.get(api.properties.get.path, async (req, res) => {
     const property = await storage.getProperty(Number(req.params.id));
     if (!property) {

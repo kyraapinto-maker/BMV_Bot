@@ -15,7 +15,7 @@ export const properties = pgTable("properties", {
 
 export const calls = pgTable("calls", {
   id: serial("id").primaryKey(),
-  propertyId: integer("property_id").references(() => properties.id).notNull(),
+  propertyId: integer("property_id").references(() => properties.id, { onDelete: 'cascade' }).notNull(),
   status: text("status").notNull(), // 'completed', 'failed', 'calling'
   result: text("result"), // 'viewing_booked', 'no_answer', 'not_interested'
   viewingDate: timestamp("viewing_date"),
