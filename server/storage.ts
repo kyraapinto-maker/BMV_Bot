@@ -1,38 +1,49 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import {
+  properties, calls,
+  type InsertProperty, type Property,
+  type InsertCall, type Call,
+  type CallWithProperty
+} from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getProperties(): Promise<Property[]>;
+  getProperty(id: number): Promise<Property | undefined>;
+  getCalls(): Promise<CallWithProperty[]>;
+  createCall(call: InsertCall): Promise<Call>;
+  createProperty(property: InsertProperty): Promise<Property>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  async getProperties(): Promise<Property[]> {
+    return await db.select().from(properties);
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getProperty(id: number): Promise<Property | undefined> {
+    const [property] = await db.select().from(properties).where(eq(properties.id, id));
+    return property;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getCalls(): Promise<CallWithProperty[]> {
+    const records = await db.query.calls.findMany({
+      with: {
+        property: true
+      },
+      orderBy: [desc(calls.createdAt)]
+    });
+    return records;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async createCall(call: InsertCall): Promise<Call> {
+    const [newCall] = await db.insert(calls).values(call).returning();
+    return newCall;
+  }
+
+  async createProperty(property: InsertProperty): Promise<Property> {
+    const [newProperty] = await db.insert(properties).values(property).returning();
+    return newProperty;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
