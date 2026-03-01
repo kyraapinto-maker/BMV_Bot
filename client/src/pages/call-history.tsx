@@ -1,6 +1,15 @@
 import { useCalls } from "@/hooks/use-calls";
 import { format } from "date-fns";
-import { ExternalLink, CalendarDays, PhoneForwarded, CheckCircle2, XCircle, Clock } from "lucide-react";
+import {
+  ExternalLink,
+  CalendarDays,
+  PhoneForwarded,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  MessageSquare,
+  Banknote,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -15,12 +24,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function getStatusBadge(status: string) {
   switch (status) {
-    case 'completed':
-      return <Badge variant="default" className="bg-green-500 hover:bg-green-600 shadow-none"><CheckCircle2 className="w-3 h-3 mr-1"/> Completed</Badge>;
-    case 'failed':
-      return <Badge variant="destructive" className="shadow-none"><XCircle className="w-3 h-3 mr-1"/> Failed</Badge>;
-    case 'calling':
-      return <Badge variant="secondary" className="bg-blue-500/10 text-blue-700 hover:bg-blue-500/20 border-blue-200 shadow-none animate-pulse"><PhoneForwarded className="w-3 h-3 mr-1"/> Calling...</Badge>;
+    case "completed":
+      return (
+        <Badge
+          variant="default"
+          className="bg-green-500 hover:bg-green-600 shadow-none"
+        >
+          <CheckCircle2 className="w-3 h-3 mr-1" /> Completed
+        </Badge>
+      );
+    case "failed":
+      return (
+        <Badge variant="destructive" className="shadow-none">
+          <XCircle className="w-3 h-3 mr-1" /> Failed
+        </Badge>
+      );
+    case "calling":
+      return (
+        <Badge
+          variant="secondary"
+          className="bg-blue-500/10 text-blue-700 hover:bg-blue-500/20 border-blue-200 shadow-none animate-pulse"
+        >
+          <PhoneForwarded className="w-3 h-3 mr-1" /> Calling...
+        </Badge>
+      );
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -28,16 +55,34 @@ function getStatusBadge(status: string) {
 
 function getResultBadge(result: string | null) {
   if (!result) return <span className="text-muted-foreground text-sm">-</span>;
-  
+
   switch (result) {
-    case 'viewing_booked':
-      return <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 font-semibold">Viewing Booked</Badge>;
-    case 'no_answer':
-      return <Badge variant="outline" className="text-muted-foreground">No Answer</Badge>;
-    case 'not_interested':
-      return <Badge variant="outline" className="border-orange-200 text-orange-700 bg-orange-50">Not Interested</Badge>;
+    case "viewing_booked":
+      return (
+        <Badge
+          variant="outline"
+          className="border-primary/30 text-primary bg-primary/5 font-semibold"
+        >
+          Viewing Booked
+        </Badge>
+      );
+    case "no_answer":
+      return (
+        <Badge variant="outline" className="text-muted-foreground">
+          No Answer
+        </Badge>
+      );
+    case "not_interested":
+      return (
+        <Badge
+          variant="outline"
+          className="border-orange-200 text-orange-700 bg-orange-50"
+        >
+          Not Interested
+        </Badge>
+      );
     default:
-      return <Badge variant="outline">{result.replace('_', ' ')}</Badge>;
+      return <Badge variant="outline">{result.replace("_", " ")}</Badge>;
   }
 }
 
@@ -68,7 +113,7 @@ export default function CallHistory() {
               <Skeleton className="h-8 w-1/4" />
               <Skeleton className="h-8 w-1/4" />
             </div>
-            {[1, 2, 3, 4, 5].map(i => (
+            {[1, 2, 3, 4, 5].map((i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
@@ -81,9 +126,12 @@ export default function CallHistory() {
             <div className="bg-muted p-4 rounded-full mb-4">
               <PhoneForwarded className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-bold text-foreground">No calls made yet</h3>
+            <h3 className="text-xl font-bold text-foreground">
+              No calls made yet
+            </h3>
             <p className="text-muted-foreground mt-2 max-w-sm">
-              Head over to the Dashboard to instruct the AI agent to call agencies for properties.
+              Head over to the Dashboard to instruct the AI agent to call
+              agencies for properties.
             </p>
           </div>
         ) : (
@@ -91,34 +139,70 @@ export default function CallHistory() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold w-[200px]">Date</TableHead>
+                  <TableHead className="font-semibold w-[180px]">
+                    Date
+                  </TableHead>
                   <TableHead className="font-semibold">Property</TableHead>
                   <TableHead className="font-semibold">Call Status</TableHead>
                   <TableHead className="font-semibold">Result</TableHead>
+                  <TableHead className="font-semibold">Offered Price</TableHead>
+                  <TableHead className="font-semibold">Comment</TableHead>
                   <TableHead className="font-semibold">Viewing Date</TableHead>
-                  <TableHead className="text-right font-semibold">Link</TableHead>
+                  <TableHead className="text-right font-semibold">
+                    Link
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {calls.map((call) => (
-                  <TableRow key={call.id} className="hover:bg-muted/20 transition-colors">
+                  <TableRow
+                    key={call.id}
+                    className="hover:bg-muted/20 transition-colors"
+                  >
                     <TableCell className="font-medium text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 opacity-50" />
-                        {call.createdAt ? format(new Date(call.createdAt), "MMM d, yyyy HH:mm") : "Unknown"}
+                        {call.createdAt
+                          ? format(
+                              new Date(call.createdAt),
+                              "MMM d, HH:mm",
+                            )
+                          : "Unknown"}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium text-foreground">{call.property.address}</span>
-                        <span className="text-xs text-muted-foreground">{call.property.postcode}</span>
+                        <span className="font-medium text-foreground">
+                          {call.property.address}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {call.property.postcode}
+                        </span>
                       </div>
                     </TableCell>
+                    <TableCell>{getStatusBadge(call.status)}</TableCell>
+                    <TableCell>{getResultBadge(call.result)}</TableCell>
                     <TableCell>
-                      {getStatusBadge(call.status)}
+                      {call.offeredPrice ? (
+                        <div className="flex items-center gap-1.5 text-foreground font-semibold">
+                          <Banknote className="w-4 h-4 text-green-600" />
+                          £{call.offeredPrice.toLocaleString()}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs italic">No offer</span>
+                      )}
                     </TableCell>
                     <TableCell>
-                      {getResultBadge(call.result)}
+                      {call.comment ? (
+                        <div className="flex items-start gap-2 max-w-[200px]">
+                          <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                          <span className="text-xs text-muted-foreground line-clamp-2 italic">
+                            {call.comment}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {call.viewingDate ? (
@@ -131,8 +215,17 @@ export default function CallHistory() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="h-8 hover-elevate" asChild>
-                        <a href={call.property.link} target="_blank" rel="noopener noreferrer">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 hover-elevate"
+                        asChild
+                      >
+                        <a
+                          href={call.property.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           View <ExternalLink className="w-3 h-3 ml-1.5" />
                         </a>
                       </Button>

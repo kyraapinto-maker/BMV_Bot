@@ -132,10 +132,25 @@ export async function registerRoutes(
         ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
         : null;
 
+      const offeredPrice = randomResult === 'viewing_booked'
+        ? Math.floor(property.price * 0.85)
+        : null;
+
+      const comments = [
+        "Spoke to agent Sarah, she confirmed the seller is motivated.",
+        "Left a voicemail for the lead negotiator.",
+        "Agent mentioned there are several other interested parties.",
+        "Property has structural issues as suspected.",
+        "Viewing scheduled for next Tuesday."
+      ];
+      const randomComment = comments[Math.floor(Math.random() * comments.length)];
+
       const callData = {
         propertyId,
         status: 'completed',
         result: randomResult,
+        offeredPrice,
+        comment: randomComment,
         viewingDate
       };
 

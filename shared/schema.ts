@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -18,6 +18,8 @@ export const calls = pgTable("calls", {
   propertyId: integer("property_id").references(() => properties.id, { onDelete: 'cascade' }).notNull(),
   status: text("status").notNull(), // 'completed', 'failed', 'calling'
   result: text("result"), // 'viewing_booked', 'no_answer', 'not_interested'
+  offeredPrice: integer("offered_price"),
+  comment: text("comment"),
   viewingDate: timestamp("viewing_date"),
   createdAt: timestamp("created_at").defaultNow(),
 });
