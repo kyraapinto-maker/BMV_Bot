@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertPropertySchema, insertCallSchema, properties, calls } from './schema';
+import { insertPropertySchema, insertCallSchema, insertOpportunitySchema, properties, calls, opportunities } from './schema';
 import type { CallWithProperty } from './schema';
 
 export const errorSchemas = {
@@ -64,6 +64,31 @@ export const api = {
       responses: {
         201: z.custom<typeof calls.$inferSelect>(),
         404: errorSchemas.notFound,
+      },
+    },
+  },
+  opportunities: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/opportunities' as const,
+      responses: {
+        200: z.array(z.custom<typeof opportunities.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/opportunities' as const,
+      input: insertOpportunitySchema,
+      responses: {
+        201: z.custom<typeof opportunities.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/opportunities/:id' as const,
+      responses: {
+        200: z.object({ message: z.string() }),
       },
     },
   },

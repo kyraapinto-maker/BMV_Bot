@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import CallHistory from "@/pages/call-history";
 import Sourcing from "@/pages/sourcing";
+import Opportunities from "@/pages/opportunities";
 import { MainLayout } from "@/components/layout/main-layout";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard}/>
         <Route path="/sourcing" component={Sourcing}/>
+        <Route path="/opportunities" component={Opportunities}/>
         <Route path="/history" component={CallHistory}/>
         <Route component={NotFound} />
       </Switch>

@@ -36,6 +36,17 @@ export const calls = pgTable("calls", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const opportunities = pgTable("opportunities", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email").notNull(),
+  address: text("address").notNull(),
+  availability: text("availability").notNull(),
+  knowledgeBase: text("knowledge_base"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const propertiesRelations = relations(properties, ({ many }) => ({
   calls: many(calls),
 }));
@@ -54,12 +65,19 @@ export const insertCallSchema = createInsertSchema(calls).omit({
   id: true,
   createdAt: true,
 });
+export const insertOpportunitySchema = createInsertSchema(opportunities).omit({
+  id: true,
+  createdAt: true,
+});
 
 export type Property = typeof properties.$inferSelect;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
 
 export type Call = typeof calls.$inferSelect;
 export type InsertCall = z.infer<typeof insertCallSchema>;
+
+export type Opportunity = typeof opportunities.$inferSelect;
+export type InsertOpportunity = z.infer<typeof insertOpportunitySchema>;
 
 export type PropertyWithCalls = Property & { calls: Call[] };
 export type CallWithProperty = Call & { property: Property };

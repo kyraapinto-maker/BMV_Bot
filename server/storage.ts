@@ -2,11 +2,14 @@ import { db } from "./db";
 import {
   properties,
   calls,
+  opportunities,
   type InsertProperty,
   type Property,
   type InsertCall,
   type Call,
   type CallWithProperty,
+  type InsertOpportunity,
+  type Opportunity,
 } from "@shared/schema";
 import { eq, desc, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -19,6 +22,9 @@ export interface IStorage {
   createProperty(property: InsertProperty): Promise<Property>;
   deleteProperty(id: number): Promise<void>;
   backfillUniqueIndexes(): Promise<void>;
+  getOpportunities(): Promise<Opportunity[]>;
+  createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity>;
+  deleteOpportunity(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -73,6 +79,19 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProperty(id: number): Promise<void> {
     await db.delete(properties).where(eq(properties.id, id));
+  }
+
+  async getOpportunities(): Promise<Opportunity[]> {
+    return await db.select().from(opportunities).orderBy(desc(opportunities.createdAt));
+  }
+
+  async createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity> {
+    const [newOpportunity] = await db.insert(opportunities).values(opportunity).returning();
+    return newOpportunity;
+  }
+
+  async deleteOpportunity(id: number): Promise<void> {
+    await db.delete(opportunities).where(eq(opportunities.id, id));
   }
 
   async backfillUniqueIndexes(): Promise<void> {

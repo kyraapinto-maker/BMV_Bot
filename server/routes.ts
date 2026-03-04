@@ -164,5 +164,40 @@ export async function registerRoutes(
     }
   });
 
+  app.get(api.opportunities.list.path, async (req, res) => {
+    try {
+      const list = await storage.getOpportunities();
+      res.status(200).json(list);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : "Internal Server Error",
+      });
+    }
+  });
+
+  app.post(api.opportunities.create.path, async (req, res) => {
+    try {
+      const input = api.opportunities.create.input.parse(req.body);
+      const opportunity = await storage.createOpportunity(input);
+      res.status(201).json(opportunity);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join("."),
+        });
+      }
+      res.status(500).json({
+        message: err instanceof Error ? err.message : "Internal Server Error",
+      });
+    }
+  });
+
+  app.delete(api.opportunities.delete.path, async (req, res) => {
+    const id = Number(req.params.id);
+    await storage.deleteOpportunity(id);
+    res.status(200).json({ message: "Opportunity removed" });
+  });
+
   return httpServer;
 }

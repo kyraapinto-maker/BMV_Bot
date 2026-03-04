@@ -1,4 +1,4 @@
-import { Home, PhoneCall, Building2, Search } from "lucide-react";
+import { Home, PhoneCall, Building2, Search, Briefcase } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -15,6 +15,7 @@ import {
 const items = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Sourcing", url: "/sourcing", icon: Search },
+  { title: "Opportunities", url: "/opportunities", icon: Briefcase },
   { title: "Call History", url: "/history", icon: PhoneCall },
 ];
 
