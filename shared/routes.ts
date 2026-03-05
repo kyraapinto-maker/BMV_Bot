@@ -91,6 +91,14 @@ export const api = {
         200: z.object({ message: z.string() }),
       },
     },
+    activate: {
+      method: 'POST' as const,
+      path: '/api/opportunities/:id/activate' as const,
+      responses: {
+        200: z.custom<typeof opportunities.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
   },
 };
 

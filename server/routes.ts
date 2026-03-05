@@ -40,6 +40,10 @@ export async function registerRoutes(
     console.error("Backfill failed:", err.message);
   });
 
+  storage.backfillOpportunityUniqueIndexes().catch((err) => {
+    console.error("Opportunity backfill failed:", err.message);
+  });
+
   app.get(api.properties.list.path, async (req, res) => {
     try {
       const propertiesList = await storage.getProperties();
@@ -197,6 +201,21 @@ export async function registerRoutes(
     const id = Number(req.params.id);
     await storage.deleteOpportunity(id);
     res.status(200).json({ message: "Opportunity removed" });
+  });
+
+  app.post(api.opportunities.activate.path, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const updated = await storage.activateOpportunity(id);
+      if (!updated) {
+        return res.status(404).json({ message: "Opportunity not found" });
+      }
+      res.status(200).json(updated);
+    } catch (err) {
+      res.status(500).json({
+        message: err instanceof Error ? err.message : "Internal Server Error",
+      });
+    }
   });
 
   return httpServer;

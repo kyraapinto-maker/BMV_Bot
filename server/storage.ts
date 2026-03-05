@@ -25,6 +25,8 @@ export interface IStorage {
   getOpportunities(): Promise<Opportunity[]>;
   createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity>;
   deleteOpportunity(id: number): Promise<void>;
+  activateOpportunity(id: number): Promise<Opportunity>;
+  backfillOpportunityUniqueIndexes(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -86,12 +88,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity> {
-    const [newOpportunity] = await db.insert(opportunities).values(opportunity).returning();
+    const [newOpportunity] = await db.insert(opportunities).values({
+      ...opportunity,
+      uniqueIndex: nanoid(10),
+    }).returning();
     return newOpportunity;
   }
 
   async deleteOpportunity(id: number): Promise<void> {
     await db.delete(opportunities).where(eq(opportunities.id, id));
+  }
+
+  async activateOpportunity(id: number): Promise<Opportunity> {
+    await db.update(opportunities).set({ active: false });
+    const [updated] = await db
+      .update(opportunities)
+      .set({ active: true })
+      .where(eq(opportunities.id, id))
+      .returning();
+    return updated;
+  }
+
+  async backfillOpportunityUniqueIndexes(): Promise<void> {
+    const rows = await db
+      .select({ id: opportunities.id })
+      .from(opportunities)
+      .where(isNull(opportunities.uniqueIndex));
+
+    for (const row of rows) {
+      await db
+        .update(opportunities)
+        .set({ uniqueIndex: nanoid(10) })
+        .where(eq(opportunities.id, row.id));
+    }
+
+    if (rows.length > 0) {
+      console.log(`Backfilled uniqueIndex for ${rows.length} opportunities`);
+    }
   }
 
   async backfillUniqueIndexes(): Promise<void> {

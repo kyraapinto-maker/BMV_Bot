@@ -38,12 +38,14 @@ export const calls = pgTable("calls", {
 
 export const opportunities = pgTable("opportunities", {
   id: serial("id").primaryKey(),
+  uniqueIndex: text("unique_index"),
   name: text("name").notNull(),
   phone: text("phone").notNull(),
   email: text("email").notNull(),
   address: text("address").notNull(),
   availability: text("availability").notNull(),
   knowledgeBase: text("knowledge_base"),
+  active: boolean("active").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

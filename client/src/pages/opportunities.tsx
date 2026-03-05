@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Trash2, Loader2, Plus, User, Phone, Mail, MapPin, Clock, BookOpen } from "lucide-react";
+import { Trash2, Loader2, Plus, User, Phone, Mail, MapPin, Clock, BookOpen, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +78,20 @@ export default function Opportunities() {
       toast({
         title: "Opportunity removed",
         description: "The entry has been deleted.",
+      });
+      queryClient.invalidateQueries({ queryKey: [api.opportunities.list.path] });
+    },
+  });
+
+  const activateMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", buildUrl(api.opportunities.activate.path, { id }));
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profile selected",
+        description: "This profile is now active for calls.",
       });
       queryClient.invalidateQueries({ queryKey: [api.opportunities.list.path] });
     },
@@ -287,45 +301,74 @@ export default function Opportunities() {
               {opportunities.map((opp) => (
                 <Card
                   key={opp.id}
-                  className="border-border/50 shadow-sm shadow-black/5 hover:shadow-md transition-shadow"
+                  className={`border-border/50 shadow-sm shadow-black/5 hover:shadow-md transition-all cursor-pointer ${
+                    opp.active
+                      ? "ring-2 ring-primary border-primary/40"
+                      : ""
+                  }`}
                   data-testid={`card-opportunity-${opp.id}`}
+                  onClick={() => {
+                    if (!opp.active) activateMutation.mutate(opp.id);
+                  }}
                 >
                   <CardContent className="p-5">
                     <div className="flex justify-between items-start gap-4">
-                      <div className="space-y-2 flex-1 min-w-0">
-                        <h3 className="font-bold text-foreground truncate" data-testid={`text-name-${opp.id}`}>
-                          {opp.name}
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1.5">
-                            <Phone className="w-3.5 h-3.5" />
-                            <span className="truncate">{opp.phone}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Mail className="w-3.5 h-3.5" />
-                            <span className="truncate">{opp.email}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5" />
-                            <span className="truncate">{opp.address}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span className="truncate">{opp.availability}</span>
-                          </div>
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div
+                          className={`shrink-0 mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                            opp.active
+                              ? "bg-primary border-primary text-primary-foreground"
+                              : "border-muted-foreground/30"
+                          }`}
+                          data-testid={`toggle-active-${opp.id}`}
+                        >
+                          {opp.active && <Check className="w-3.5 h-3.5" />}
                         </div>
-                        {opp.knowledgeBase && (
-                          <div className="flex items-start gap-1.5 text-sm text-muted-foreground mt-1">
-                            <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                            <span className="line-clamp-2">{opp.knowledgeBase}</span>
+                        <div className="space-y-2 flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-foreground truncate" data-testid={`text-name-${opp.id}`}>
+                              {opp.name}
+                            </h3>
+                            {opp.active && (
+                              <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                Active
+                              </span>
+                            )}
                           </div>
-                        )}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <Phone className="w-3.5 h-3.5" />
+                              <span className="truncate">{opp.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5" />
+                              <span className="truncate">{opp.email}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5" />
+                              <span className="truncate">{opp.address}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span className="truncate">{opp.availability}</span>
+                            </div>
+                          </div>
+                          {opp.knowledgeBase && (
+                            <div className="flex items-start gap-1.5 text-sm text-muted-foreground mt-1">
+                              <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                              <span className="line-clamp-2">{opp.knowledgeBase}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <Button
                         variant="outline"
                         size="icon"
                         className="shrink-0 rounded-xl"
-                        onClick={() => deleteMutation.mutate(opp.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteMutation.mutate(opp.id);
+                        }}
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-opportunity-${opp.id}`}
                       >

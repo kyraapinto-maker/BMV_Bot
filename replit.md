@@ -28,11 +28,12 @@ A property sourcing and AI-powered agency calling dashboard. Users can search fo
 ## Database Tables
 - `properties` - Property listings with uniqueIndex (nanoid)
 - `calls` - Call records linked to properties
-- `opportunities` - User-submitted call opportunity details
+- `opportunities` - User-submitted call opportunity details, each with uniqueIndex (nanoid) and active flag
 
 ## Important Notes
-- Properties get a unique `uniqueIndex` (10-char nanoid) auto-generated on creation
-- Existing properties without uniqueIndex are backfilled on server startup
+- Properties and opportunities get a unique `uniqueIndex` (10-char nanoid) auto-generated on creation
+- Existing records without uniqueIndex are backfilled on server startup
+- Only one opportunity can be active at a time (used as the profile for calls)
 - External property search API: Lambda function at `czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws`
 - Database requires SSL (`ssl: { rejectUnauthorized: false }`)
 - Schema pushes require: `NODE_TLS_REJECT_UNAUTHORIZED=0 DATABASE_URL="${DATABASE_URL}?sslmode=require" npx drizzle-kit push`
