@@ -60,7 +60,7 @@ export const api = {
     },
     create: {
       method: 'POST' as const,
-      path: '/api/properties/:id/call' as const,
+      path: '/api/calls/:unique_index' as const,
       responses: {
         201: z.custom<typeof calls.$inferSelect>(),
         404: errorSchemas.notFound,

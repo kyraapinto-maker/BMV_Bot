@@ -132,8 +132,8 @@ export async function registerRoutes(
 
   app.post(api.calls.create.path, async (req, res) => {
     try {
-      const propertyId = Number(req.params.id);
-      const property = await storage.getProperty(propertyId);
+      const uniqueIndex = req.params.unique_index;
+      const property = await storage.getPropertyByUniqueIndex(uniqueIndex);
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
       }
@@ -143,7 +143,7 @@ export async function registerRoutes(
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ unique_index: property.uniqueIndex }),
+          body: JSON.stringify({ unique_index: uniqueIndex }),
         }
       );
 
@@ -155,7 +155,7 @@ export async function registerRoutes(
       }
 
       const callData = {
-        propertyId,
+        propertyId: property.id,
         status: lambdaResponse.ok ? "completed" : "failed",
         result: lambdaResult.result ?? null,
         offeredPrice: lambdaResult.offeredPrice ?? null,

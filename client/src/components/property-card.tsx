@@ -137,7 +137,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
           <Button
             className="flex-1 rounded-xl shadow-md shadow-primary/20 transition-all active:scale-[0.98]"
-            onClick={() => initiateCall(property.id)}
+            onClick={() => initiateCall(property.uniqueIndex!)}
             disabled={isCalling}
           >
             {isCalling ? (

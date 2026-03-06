@@ -19,8 +19,8 @@ export function useCreateCall() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (propertyId: number) => {
-      const url = buildUrl(api.calls.create.path, { id: propertyId });
+    mutationFn: async (unique_index: string) => {
+      const url = buildUrl(api.calls.create.path, { unique_index: unique_index });
       const res = await fetch(url, {
         method: api.calls.create.method,
         headers: { "Content-Type": "application/json" },

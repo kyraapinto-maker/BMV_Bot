@@ -17,6 +17,7 @@ import { nanoid } from "nanoid";
 export interface IStorage {
   getProperties(): Promise<Property[]>;
   getProperty(id: number): Promise<Property | undefined>;
+  getPropertyByUniqueIndex(uniqueIndex: string): Promise<Property | undefined>;
   getCalls(): Promise<CallWithProperty[]>;
   createCall(call: InsertCall): Promise<Call>;
   createProperty(property: InsertProperty): Promise<Property>;
@@ -39,6 +40,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(properties)
       .where(eq(properties.id, id));
+    return property;
+  }
+
+  async getPropertyByUniqueIndex(uniqueIndex: string): Promise<Property | undefined> {
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.uniqueIndex, uniqueIndex));
     return property;
   }
 
