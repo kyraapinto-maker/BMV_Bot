@@ -133,6 +133,22 @@ export async function registerRoutes(
   app.post(api.calls.create.path, async (req, res) => {
     try {
       const uniqueIndex = req.params.unique_index;
+      console.log(
+        "uniqueIndex",
+        uniqueIndex,
+        "req.params",
+        req.params,
+        "req.body",
+        req.body,
+        "req.query",
+        req.query,
+        "req.url",
+        req.url,
+        "req.path",
+        req.path,
+        "req.originalUrl",
+        req.originalUrl,
+      );
       const property = await storage.getPropertyByUniqueIndex(uniqueIndex);
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
@@ -144,14 +160,15 @@ export async function registerRoutes(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ unique_index: uniqueIndex }),
-        }
+        },
       );
 
       let lambdaResult: any = {};
+      const responseText = await lambdaResponse.text();
       try {
-        lambdaResult = await lambdaResponse.json();
+        lambdaResult = JSON.parse(responseText);
       } catch {
-        lambdaResult = { message: await lambdaResponse.text() };
+        lambdaResult = { message: responseText };
       }
 
       const callData = {
@@ -160,7 +177,9 @@ export async function registerRoutes(
         result: lambdaResult.result ?? null,
         offeredPrice: lambdaResult.offeredPrice ?? null,
         comment: lambdaResult.comment ?? null,
-        viewingDate: lambdaResult.viewingDate ? new Date(lambdaResult.viewingDate) : null,
+        viewingDate: lambdaResult.viewingDate
+          ? new Date(lambdaResult.viewingDate)
+          : null,
       };
       const newCall = await storage.createCall(callData);
       res.status(201).json(newCall);
@@ -177,7 +196,8 @@ export async function registerRoutes(
       res.status(200).json(list);
     } catch (error) {
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Internal Server Error",
+        message:
+          error instanceof Error ? error.message : "Internal Server Error",
       });
     }
   });
