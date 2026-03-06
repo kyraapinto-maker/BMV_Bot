@@ -138,26 +138,29 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Property not found" });
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      const results = ["viewing_booked", "no_answer", "not_interested"];
-      const randomResult = results[Math.floor(Math.random() * results.length)];
-      const viewingDate =
-        randomResult === "viewing_booked"
-          ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-          : null;
-      const offeredPrice =
-        randomResult === "viewing_booked"
-          ? Math.floor(property.price * 0.85)
-          : null;
-      const randomComment = "Agent spoke to owner about the renovation needs.";
+      const lambdaResponse = await fetch(
+        "https://zywrcov6gl5hx5urwlykshhowa0rnopp.lambda-url.us-east-1.on.aws/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ unique_index: property.uniqueIndex }),
+        }
+      );
+
+      let lambdaResult: any = {};
+      try {
+        lambdaResult = await lambdaResponse.json();
+      } catch {
+        lambdaResult = { message: await lambdaResponse.text() };
+      }
 
       const callData = {
         propertyId,
-        status: "completed",
-        result: randomResult,
-        offeredPrice,
-        comment: randomComment,
-        viewingDate,
+        status: lambdaResponse.ok ? "completed" : "failed",
+        result: lambdaResult.result ?? null,
+        offeredPrice: lambdaResult.offeredPrice ?? null,
+        comment: lambdaResult.comment ?? null,
+        viewingDate: lambdaResult.viewingDate ? new Date(lambdaResult.viewingDate) : null,
       };
       const newCall = await storage.createCall(callData);
       res.status(201).json(newCall);
