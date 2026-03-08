@@ -133,6 +133,10 @@ export async function registerRoutes(
   app.post(api.calls.create.path, async (req, res) => {
     try {
       const uniqueIndex = req.params.unique_index;
+      const property = await storage.getPropertyByUniqueIndex(uniqueIndex);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
 
       const lambdaResponse = await fetch(
         "https://zywrcov6gl5hx5urwlykshhowa0rnopp.lambda-url.us-east-1.on.aws/",
@@ -151,7 +155,18 @@ export async function registerRoutes(
         lambdaResult = { message: responseText };
       }
 
-      res.status(lambdaResponse.status).json(lambdaResult);
+      const callData = {
+        propertyId: property.id,
+        propertyUniqueIndex: uniqueIndex,
+        status: lambdaResponse.ok ? "completed" : "failed",
+        result: lambdaResult.result ?? null,
+        offeredPrice: lambdaResult.offeredPrice ?? null,
+        comment: lambdaResult.comment ?? null,
+        viewingDate: lambdaResult.viewingDate ? new Date(lambdaResult.viewingDate) : null,
+      };
+      const newCall = await storage.createCall(callData);
+
+      res.status(201).json(newCall);
     } catch (err) {
       res.status(500).json({
         message: err instanceof Error ? err.message : "Internal Server Error",
