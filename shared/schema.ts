@@ -28,6 +28,7 @@ export const calls = pgTable("calls", {
   propertyId: integer("property_id")
     .references(() => properties.id, { onDelete: "cascade" })
     .notNull(),
+  propertyUniqueIndex: text("property_unique_index"),
   status: text("status").notNull(), // 'completed', 'failed', 'calling'
   result: text("result"), // 'viewing_booked', 'no_answer', 'not_interested'
   offeredPrice: integer("offered_price"),
