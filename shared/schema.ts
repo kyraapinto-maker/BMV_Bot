@@ -29,6 +29,11 @@ export const calls = pgTable("calls", {
     .references(() => properties.id, { onDelete: "cascade" })
     .notNull(),
   propertyUniqueIndex: text("property_unique_index"),
+  status: text("status"),
+  result: text("result"),
+  offeredPrice: integer("offered_price"),
+  comment: text("comment"),
+  viewingDate: timestamp("viewing_date"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

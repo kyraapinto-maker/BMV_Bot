@@ -158,11 +158,6 @@ export async function registerRoutes(
       const callData = {
         propertyId: property.id,
         propertyUniqueIndex: uniqueIndex,
-        status: lambdaResponse.ok ? "completed" : "failed",
-        result: lambdaResult.result ?? null,
-        offeredPrice: lambdaResult.offeredPrice ?? null,
-        comment: lambdaResult.comment ?? null,
-        viewingDate: lambdaResult.viewingDate ? new Date(lambdaResult.viewingDate) : null,
       };
       const newCall = await storage.createCall(callData);
 
