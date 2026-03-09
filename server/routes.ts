@@ -138,12 +138,17 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Property not found" });
       }
 
+      const newCall = await storage.createCall({
+        propertyId: property.id,
+        propertyUniqueIndex: uniqueIndex,
+      });
+
       const lambdaResponse = await fetch(
         "https://zywrcov6gl5hx5urwlykshhowa0rnopp.lambda-url.us-east-1.on.aws/",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ unique_index: uniqueIndex }),
+          body: JSON.stringify({ unique_index: uniqueIndex, call_id: newCall.id }),
         },
       );
 
@@ -155,13 +160,7 @@ export async function registerRoutes(
         lambdaResult = { message: responseText };
       }
 
-      const callData = {
-        propertyId: property.id,
-        propertyUniqueIndex: uniqueIndex,
-      };
-      const newCall = await storage.createCall(callData);
-
-      res.status(201).json(newCall);
+      res.status(201).json({ call: newCall, lambda: lambdaResult });
     } catch (err) {
       res.status(500).json({
         message: err instanceof Error ? err.message : "Internal Server Error",
