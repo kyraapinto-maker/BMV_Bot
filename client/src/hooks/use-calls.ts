@@ -19,8 +19,8 @@ export function useCreateCall() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (unique_index: string) => {
-      const url = buildUrl(api.calls.create.path, { unique_index: unique_index });
+    mutationFn: async (uniqueIndex: string) => {
+      const url = buildUrl(api.calls.create.path, { unique_index: uniqueIndex });
       const res = await fetch(url, {
         method: api.calls.create.method,
         headers: { "Content-Type": "application/json" },
@@ -34,16 +34,13 @@ export function useCreateCall() {
         throw new Error("Failed to initiate call");
       }
       
-      const data = await res.json();
-      return api.calls.create.responses[201].parse(data);
+      return await res.json();
     },
     onSuccess: () => {
       toast({
         title: "Call Initiated",
         description: "The AI agent is now dialing the agency.",
       });
-      // Invalidate both lists since a new call affects call history
-      // and potentially the status on the dashboard
       queryClient.invalidateQueries({ queryKey: [api.calls.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.properties.list.path] });
     },
