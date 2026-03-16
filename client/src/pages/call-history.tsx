@@ -155,7 +155,7 @@ export default function CallHistory() {
                   <TableHead className="font-semibold">Call Status</TableHead>
                   <TableHead className="font-semibold">Result</TableHead>
                   <TableHead className="font-semibold">Offered Price</TableHead>
-                  <TableHead className="font-semibold">Summary</TableHead>
+                  <TableHead className="font-semibold text-center">Summary</TableHead>
                   <TableHead className="font-semibold">Viewing Date</TableHead>
                   <TableHead className="font-semibold text-center">Transcript</TableHead>
                   <TableHead className="text-right font-semibold">Link</TableHead>
@@ -197,14 +197,29 @@ export default function CallHistory() {
                         <span className="text-muted-foreground text-xs italic">No offer</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       {call.summary ? (
-                        <div className="flex items-start gap-2 max-w-[220px]">
-                          <FileText className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                          <span className="text-xs text-muted-foreground line-clamp-3">
-                            {call.summary}
-                          </span>
-                        </div>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg" data-testid={`button-summary-${call.id}`}>
+                              <FileText className="w-3.5 h-3.5" />
+                              View
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-primary" />
+                                Call Summary — {call.property.address}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <ScrollArea className="h-[60vh] mt-2 rounded-lg border bg-muted/30 p-4">
+                              <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">
+                                {call.summary}
+                              </pre>
+                            </ScrollArea>
+                          </DialogContent>
+                        </Dialog>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
