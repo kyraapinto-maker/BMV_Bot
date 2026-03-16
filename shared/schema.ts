@@ -36,7 +36,7 @@ export const calls = pgTable("calls", {
   viewingDate: timestamp("viewing_date"),
   summary: text("summary"),
   transcript: text("transcript"),
-  elevenlabsConvsationId: text("elevenlabs_convseration_id"),
+  elevenlabsConversationId: text("elevenlabs_conversation_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
