@@ -9,6 +9,8 @@ import {
   Clock,
   MessageSquare,
   Banknote,
+  FileText,
+  ScrollText,
 } from "lucide-react";
 import {
   Table,
@@ -21,8 +23,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-function getStatusBadge(status: string) {
+function getStatusBadge(status: string | null) {
   switch (status) {
     case "completed":
       return (
@@ -49,7 +59,8 @@ function getStatusBadge(status: string) {
         </Badge>
       );
     default:
-      return <Badge variant="outline">{status}</Badge>;
+      if (status) return <Badge variant="outline">{status}</Badge>;
+      return <span className="text-muted-foreground text-sm">-</span>;
   }
 }
 
@@ -139,18 +150,15 @@ export default function CallHistory() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold w-[180px]">
-                    Date
-                  </TableHead>
+                  <TableHead className="font-semibold w-[180px]">Date</TableHead>
                   <TableHead className="font-semibold">Property</TableHead>
                   <TableHead className="font-semibold">Call Status</TableHead>
                   <TableHead className="font-semibold">Result</TableHead>
                   <TableHead className="font-semibold">Offered Price</TableHead>
-                  <TableHead className="font-semibold">Comment</TableHead>
+                  <TableHead className="font-semibold">Summary</TableHead>
                   <TableHead className="font-semibold">Viewing Date</TableHead>
-                  <TableHead className="text-right font-semibold">
-                    Link
-                  </TableHead>
+                  <TableHead className="font-semibold text-center">Transcript</TableHead>
+                  <TableHead className="text-right font-semibold">Link</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -163,10 +171,7 @@ export default function CallHistory() {
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 opacity-50" />
                         {call.createdAt
-                          ? format(
-                              new Date(call.createdAt),
-                              "MMM d, HH:mm",
-                            )
+                          ? format(new Date(call.createdAt), "MMM d, HH:mm")
                           : "Unknown"}
                       </div>
                     </TableCell>
@@ -193,11 +198,11 @@ export default function CallHistory() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {call.comment ? (
-                        <div className="flex items-start gap-2 max-w-[200px]">
-                          <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                          <span className="text-xs text-muted-foreground line-clamp-2 italic">
-                            {call.comment}
+                      {call.summary ? (
+                        <div className="flex items-start gap-2 max-w-[220px]">
+                          <FileText className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                          <span className="text-xs text-muted-foreground line-clamp-3">
+                            {call.summary}
                           </span>
                         </div>
                       ) : (
@@ -210,6 +215,33 @@ export default function CallHistory() {
                           <CalendarDays className="w-4 h-4" />
                           {format(new Date(call.viewingDate), "MMM d, yyyy")}
                         </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {call.transcript ? (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg" data-testid={`button-transcript-${call.id}`}>
+                              <ScrollText className="w-3.5 h-3.5" />
+                              View
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <ScrollText className="w-4 h-4 text-primary" />
+                                Call Transcript — {call.property.address}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <ScrollArea className="h-[60vh] mt-2 rounded-lg border bg-muted/30 p-4">
+                              <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">
+                                {call.transcript}
+                              </pre>
+                            </ScrollArea>
+                          </DialogContent>
+                        </Dialog>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
                       )}

@@ -34,6 +34,9 @@ export const calls = pgTable("calls", {
   offeredPrice: integer("offered_price"),
   comment: text("comment"),
   viewingDate: timestamp("viewing_date"),
+  summary: text("summary"),
+  transcript: text("transcript"),
+  elevenlabsConvsationId: text("elevenlabs_convseration_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
