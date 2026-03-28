@@ -1,18 +1,21 @@
-import { db } from "./db";
+import { docClient, TABLES } from "./db";
 import {
-  properties,
-  calls,
-  opportunities,
-  type InsertProperty,
-  type Property,
-  type InsertCall,
-  type Call,
-  type CallWithProperty,
-  type InsertOpportunity,
-  type Opportunity,
-} from "@shared/schema";
-import { eq, desc, isNull } from "drizzle-orm";
+  PutCommand,
+  GetCommand,
+  DeleteCommand,
+  ScanCommand,
+  UpdateCommand,
+} from "@aws-sdk/lib-dynamodb";
 import { nanoid } from "nanoid";
+import type {
+  InsertProperty,
+  Property,
+  InsertCall,
+  Call,
+  CallWithProperty,
+  InsertOpportunity,
+  Opportunity,
+} from "@shared/schema";
 
 export interface IStorage {
   getProperties(): Promise<Property[]>;
@@ -30,129 +33,235 @@ export interface IStorage {
   backfillOpportunityUniqueIndexes(): Promise<void>;
 }
 
-export class DatabaseStorage implements IStorage {
+async function nextId(counterName: string): Promise<number> {
+  const result = await docClient.send(new UpdateCommand({
+    TableName: TABLES.counters,
+    Key: { counterName },
+    UpdateExpression: "SET #v = #v + :inc",
+    ExpressionAttributeNames: { "#v": "value" },
+    ExpressionAttributeValues: { ":inc": 1 },
+    ReturnValues: "UPDATED_NEW",
+  }));
+  return result.Attributes!.value as number;
+}
+
+function toProperty(item: Record<string, any>): Property {
+  return {
+    id: item.id,
+    address: item.address,
+    postcode: item.postcode ?? null,
+    price: item.price,
+    num_beds: item.num_beds ?? null,
+    daysOnMarket: item.daysOnMarket ?? null,
+    link: item.link,
+    needsWork: item.needsWork ?? true,
+    uniqueIndex: item.uniqueIndex ?? null,
+  };
+}
+
+function toCall(item: Record<string, any>): Call {
+  return {
+    id: item.id,
+    propertyId: item.propertyId,
+    propertyUniqueIndex: item.propertyUniqueIndex ?? null,
+    status: item.status ?? null,
+    result: item.result ?? null,
+    offeredPrice: item.offeredPrice ?? null,
+    comment: item.comment ?? null,
+    viewingDate: item.viewingDate ? new Date(item.viewingDate) : null,
+    summary: item.summary ?? null,
+    transcript: item.transcript ?? null,
+    elevenlabsConversationId: item.elevenlabsConversationId ?? null,
+    createdAt: item.createdAt ? new Date(item.createdAt) : null,
+  };
+}
+
+function toOpportunity(item: Record<string, any>): Opportunity {
+  return {
+    id: item.id,
+    uniqueIndex: item.uniqueIndex ?? null,
+    name: item.name,
+    phone: item.phone,
+    email: item.email,
+    address: item.address,
+    availability: item.availability,
+    knowledgeBase: item.knowledgeBase ?? null,
+    active: item.active ?? false,
+    createdAt: item.createdAt ? new Date(item.createdAt) : null,
+  };
+}
+
+export class DynamoStorage implements IStorage {
   async getProperties(): Promise<Property[]> {
-    return await db.select().from(properties);
+    const result = await docClient.send(new ScanCommand({ TableName: TABLES.properties }));
+    const items = (result.Items ?? []).map(toProperty);
+    return items.sort((a, b) => b.id - a.id);
   }
 
   async getProperty(id: number): Promise<Property | undefined> {
-    const [property] = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.id, id));
-    return property;
+    const result = await docClient.send(new GetCommand({
+      TableName: TABLES.properties,
+      Key: { id },
+    }));
+    return result.Item ? toProperty(result.Item) : undefined;
   }
 
   async getPropertyByUniqueIndex(uniqueIndex: string): Promise<Property | undefined> {
-    const [property] = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.uniqueIndex, uniqueIndex));
-    return property;
-  }
-
-  async getCalls(): Promise<CallWithProperty[]> {
-    const records = await db.query.calls.findMany({
-      with: {
-        property: true,
-      },
-      orderBy: [desc(calls.createdAt)],
-    });
-    return records;
-  }
-
-  async createCall(call: InsertCall): Promise<Call> {
-    const [newCall] = await db.insert(calls).values(call).returning();
-    return newCall;
+    const result = await docClient.send(new ScanCommand({
+      TableName: TABLES.properties,
+      FilterExpression: "uniqueIndex = :ui",
+      ExpressionAttributeValues: { ":ui": uniqueIndex },
+    }));
+    return result.Items?.[0] ? toProperty(result.Items[0]) : undefined;
   }
 
   async createProperty(property: InsertProperty): Promise<Property> {
-    try {
-      const [newProperty] = await db
-        .insert(properties)
-        .values({
-          address: property.address,
-          postcode: property.postcode,
-          price: property.price,
-          num_beds: property.num_beds,
-          daysOnMarket: property.daysOnMarket,
-          link: property.link,
-          needsWork: property.needsWork,
-          uniqueIndex: nanoid(10),
-        })
-        .returning();
-      return newProperty;
-    } catch (err) {
-      console.error("Error creating property:", err);
-      throw new Error("Failed to create property");
-    }
+    const id = await nextId("properties");
+    const item = {
+      id,
+      address: property.address,
+      postcode: property.postcode ?? null,
+      price: property.price,
+      num_beds: property.num_beds ?? null,
+      daysOnMarket: property.daysOnMarket ?? null,
+      link: property.link,
+      needsWork: property.needsWork ?? true,
+      uniqueIndex: nanoid(10),
+    };
+    await docClient.send(new PutCommand({ TableName: TABLES.properties, Item: item }));
+    return toProperty(item);
   }
 
   async deleteProperty(id: number): Promise<void> {
-    await db.delete(properties).where(eq(properties.id, id));
-  }
-
-  async getOpportunities(): Promise<Opportunity[]> {
-    return await db.select().from(opportunities).orderBy(desc(opportunities.createdAt));
-  }
-
-  async createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity> {
-    const [newOpportunity] = await db.insert(opportunities).values({
-      ...opportunity,
-      uniqueIndex: nanoid(10),
-    }).returning();
-    return newOpportunity;
-  }
-
-  async deleteOpportunity(id: number): Promise<void> {
-    await db.delete(opportunities).where(eq(opportunities.id, id));
-  }
-
-  async activateOpportunity(id: number): Promise<Opportunity> {
-    await db.update(opportunities).set({ active: false });
-    const [updated] = await db
-      .update(opportunities)
-      .set({ active: true })
-      .where(eq(opportunities.id, id))
-      .returning();
-    return updated;
-  }
-
-  async backfillOpportunityUniqueIndexes(): Promise<void> {
-    const rows = await db
-      .select({ id: opportunities.id })
-      .from(opportunities)
-      .where(isNull(opportunities.uniqueIndex));
-
-    for (const row of rows) {
-      await db
-        .update(opportunities)
-        .set({ uniqueIndex: nanoid(10) })
-        .where(eq(opportunities.id, row.id));
+    const calls = await this.getCalls();
+    for (const call of calls.filter(c => c.propertyId === id)) {
+      await docClient.send(new DeleteCommand({ TableName: TABLES.calls, Key: { id: call.id } }));
     }
-
-    if (rows.length > 0) {
-      console.log(`Backfilled uniqueIndex for ${rows.length} opportunities`);
-    }
+    await docClient.send(new DeleteCommand({ TableName: TABLES.properties, Key: { id } }));
   }
 
   async backfillUniqueIndexes(): Promise<void> {
-    const rows = await db
-      .select({ id: properties.id })
-      .from(properties)
-      .where(isNull(properties.uniqueIndex));
+    const props = await this.getProperties();
+    for (const prop of props.filter(p => !p.uniqueIndex)) {
+      await docClient.send(new UpdateCommand({
+        TableName: TABLES.properties,
+        Key: { id: prop.id },
+        UpdateExpression: "SET uniqueIndex = :ui",
+        ExpressionAttributeValues: { ":ui": nanoid(10) },
+      }));
+    }
+    if (props.filter(p => !p.uniqueIndex).length > 0) {
+      console.log(`Backfilled uniqueIndex for ${props.filter(p => !p.uniqueIndex).length} properties`);
+    }
+  }
 
-    for (const row of rows) {
-      await db
-        .update(properties)
-        .set({ uniqueIndex: nanoid(10) })
-        .where(eq(properties.id, row.id));
+  async getCalls(): Promise<CallWithProperty[]> {
+    const callsResult = await docClient.send(new ScanCommand({ TableName: TABLES.calls }));
+    const callItems = callsResult.Items ?? [];
+
+    const propertyIds = [...new Set(callItems.map((c: any) => c.propertyId))];
+    const propertyMap = new Map<number, Property>();
+    for (const pid of propertyIds) {
+      const prop = await this.getProperty(pid as number);
+      if (prop) propertyMap.set(pid as number, prop);
     }
 
-    if (rows.length > 0) {
-      console.log(`Backfilled uniqueIndex for ${rows.length} properties`);
+    const result: CallWithProperty[] = callItems
+      .map((item: any) => {
+        const call = toCall(item);
+        const property = propertyMap.get(call.propertyId);
+        if (!property) return null;
+        return { ...call, property };
+      })
+      .filter(Boolean) as CallWithProperty[];
+
+    return result.sort((a, b) => {
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return tb - ta;
+    });
+  }
+
+  async createCall(call: InsertCall): Promise<Call> {
+    const id = await nextId("calls");
+    const item = {
+      id,
+      propertyId: call.propertyId,
+      propertyUniqueIndex: call.propertyUniqueIndex ?? null,
+      status: call.status ?? "calling",
+      result: call.result ?? null,
+      offeredPrice: call.offeredPrice ?? null,
+      comment: call.comment ?? null,
+      viewingDate: call.viewingDate ? new Date(call.viewingDate).toISOString() : null,
+      summary: call.summary ?? null,
+      transcript: call.transcript ?? null,
+      elevenlabsConversationId: call.elevenlabsConversationId ?? null,
+      createdAt: new Date().toISOString(),
+    };
+    await docClient.send(new PutCommand({ TableName: TABLES.calls, Item: item }));
+    return toCall(item);
+  }
+
+  async getOpportunities(): Promise<Opportunity[]> {
+    const result = await docClient.send(new ScanCommand({ TableName: TABLES.opportunities }));
+    const items = (result.Items ?? []).map(toOpportunity);
+    return items.sort((a, b) => {
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return tb - ta;
+    });
+  }
+
+  async createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity> {
+    const id = await nextId("opportunities");
+    const item = {
+      id,
+      uniqueIndex: nanoid(10),
+      name: opportunity.name,
+      phone: opportunity.phone,
+      email: opportunity.email,
+      address: opportunity.address,
+      availability: opportunity.availability,
+      knowledgeBase: opportunity.knowledgeBase ?? null,
+      active: opportunity.active ?? false,
+      createdAt: new Date().toISOString(),
+    };
+    await docClient.send(new PutCommand({ TableName: TABLES.opportunities, Item: item }));
+    return toOpportunity(item);
+  }
+
+  async deleteOpportunity(id: number): Promise<void> {
+    await docClient.send(new DeleteCommand({ TableName: TABLES.opportunities, Key: { id } }));
+  }
+
+  async activateOpportunity(id: number): Promise<Opportunity> {
+    const all = await this.getOpportunities();
+    for (const opp of all) {
+      await docClient.send(new UpdateCommand({
+        TableName: TABLES.opportunities,
+        Key: { id: opp.id },
+        UpdateExpression: "SET active = :v",
+        ExpressionAttributeValues: { ":v": opp.id === id },
+      }));
+    }
+    const result = await docClient.send(new GetCommand({
+      TableName: TABLES.opportunities,
+      Key: { id },
+    }));
+    return toOpportunity(result.Item!);
+  }
+
+  async backfillOpportunityUniqueIndexes(): Promise<void> {
+    const opps = await this.getOpportunities();
+    for (const opp of opps.filter(o => !o.uniqueIndex)) {
+      await docClient.send(new UpdateCommand({
+        TableName: TABLES.opportunities,
+        Key: { id: opp.id },
+        UpdateExpression: "SET uniqueIndex = :ui",
+        ExpressionAttributeValues: { ":ui": nanoid(10) },
+      }));
     }
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new DynamoStorage();

@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
+import { ensureTables } from "./dynamo-setup";
 import { api } from "@shared/routes";
 import { z } from "zod";
 
@@ -32,6 +33,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express,
 ): Promise<Server> {
+  await ensureTables();
+
   seedDatabase().catch((err) => {
     console.error("Seeding failed:", err.message);
   });
