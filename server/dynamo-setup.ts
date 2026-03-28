@@ -64,18 +64,12 @@ export async function ensureTables() {
   );
 
   await createTableIfNotExists(
-    TABLES.opportunities,
-    [{ AttributeName: "id", KeyType: "HASH" }],
-    [{ AttributeName: "id", AttributeType: "N" }]
-  );
-
-  await createTableIfNotExists(
     TABLES.counters,
     [{ AttributeName: "counterName", KeyType: "HASH" }],
     [{ AttributeName: "counterName", AttributeType: "S" }]
   );
 
-  for (const name of ["properties", "calls", "opportunities"]) {
+  for (const name of ["properties", "calls"]) {
     let attempts = 0;
     while (attempts < 5) {
       try {

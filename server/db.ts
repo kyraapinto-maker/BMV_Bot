@@ -16,6 +16,6 @@ export const docClient = DynamoDBDocumentClient.from(client, {
 export const TABLES = {
   properties: "propscout_properties",
   calls: "propscout_calls",
-  opportunities: "propscout_opportunities",
+  opportunities: "propscout_users",
   counters: "propscout_counters",
 };

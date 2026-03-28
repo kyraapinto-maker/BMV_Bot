@@ -28,8 +28,8 @@ export interface IStorage {
   backfillUniqueIndexes(): Promise<void>;
   getOpportunities(): Promise<Opportunity[]>;
   createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity>;
-  deleteOpportunity(id: number): Promise<void>;
-  activateOpportunity(id: number): Promise<Opportunity>;
+  deleteOpportunity(id: number | string): Promise<void>;
+  activateOpportunity(id: number | string): Promise<Opportunity>;
   backfillOpportunityUniqueIndexes(): Promise<void>;
 }
 
@@ -78,7 +78,7 @@ function toCall(item: Record<string, any>): Call {
 
 function toOpportunity(item: Record<string, any>): Opportunity {
   return {
-    id: item.id,
+    id: item.id as any,
     uniqueIndex: item.uniqueIndex ?? null,
     name: item.name,
     phone: item.phone,
@@ -213,7 +213,7 @@ export class DynamoStorage implements IStorage {
   }
 
   async createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity> {
-    const id = await nextId("opportunities");
+    const id = nanoid(10);
     const item = {
       id,
       uniqueIndex: nanoid(10),
@@ -230,23 +230,24 @@ export class DynamoStorage implements IStorage {
     return toOpportunity(item);
   }
 
-  async deleteOpportunity(id: number): Promise<void> {
-    await docClient.send(new DeleteCommand({ TableName: TABLES.opportunities, Key: { id } }));
+  async deleteOpportunity(id: number | string): Promise<void> {
+    await docClient.send(new DeleteCommand({ TableName: TABLES.opportunities, Key: { id: String(id) } }));
   }
 
-  async activateOpportunity(id: number): Promise<Opportunity> {
+  async activateOpportunity(id: number | string): Promise<Opportunity> {
     const all = await this.getOpportunities();
+    const targetId = String(id);
     for (const opp of all) {
       await docClient.send(new UpdateCommand({
         TableName: TABLES.opportunities,
-        Key: { id: opp.id },
+        Key: { id: String(opp.id) },
         UpdateExpression: "SET active = :v",
-        ExpressionAttributeValues: { ":v": opp.id === id },
+        ExpressionAttributeValues: { ":v": String(opp.id) === targetId },
       }));
     }
     const result = await docClient.send(new GetCommand({
       TableName: TABLES.opportunities,
-      Key: { id },
+      Key: { id: targetId },
     }));
     return toOpportunity(result.Item!);
   }
@@ -256,7 +257,7 @@ export class DynamoStorage implements IStorage {
     for (const opp of opps.filter(o => !o.uniqueIndex)) {
       await docClient.send(new UpdateCommand({
         TableName: TABLES.opportunities,
-        Key: { id: opp.id },
+        Key: { id: String(opp.id) },
         UpdateExpression: "SET uniqueIndex = :ui",
         ExpressionAttributeValues: { ":ui": nanoid(10) },
       }));

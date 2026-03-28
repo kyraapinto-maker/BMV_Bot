@@ -202,14 +202,14 @@ export async function registerRoutes(
   });
 
   app.delete(api.opportunities.delete.path, async (req, res) => {
-    const id = Number(req.params.id);
+    const id = req.params.id as any;
     await storage.deleteOpportunity(id);
     res.status(200).json({ message: "Opportunity removed" });
   });
 
   app.post(api.opportunities.activate.path, async (req, res) => {
     try {
-      const id = Number(req.params.id);
+      const id = req.params.id as any;
       const updated = await storage.activateOpportunity(id);
       if (!updated) {
         return res.status(404).json({ message: "Opportunity not found" });
