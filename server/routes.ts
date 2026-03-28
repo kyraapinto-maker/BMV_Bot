@@ -151,7 +151,7 @@ export async function registerRoutes(
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ unique_index: uniqueIndex, call_id: newCall.id }),
+          body: JSON.stringify({ property_id: property.id, call_id: newCall.id }),
         },
       );
 
