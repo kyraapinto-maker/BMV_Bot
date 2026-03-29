@@ -105,7 +105,7 @@ export default function Opportunities() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold font-display text-foreground" data-testid="text-page-title">
-          Opportunities
+          Users
         </h1>
         <p className="text-muted-foreground text-lg">
           Add your details to create a call opportunity for the AI agent.
@@ -279,7 +279,7 @@ export default function Opportunities() {
 
         <div className="space-y-4">
           <h2 className="text-xl font-bold font-display text-foreground" data-testid="text-saved-title">
-            Saved Opportunities
+            Saved Users
           </h2>
 
           {isLoading ? (
