@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export function useCalls() {
   return useQuery({
@@ -52,5 +53,31 @@ export function useCreateCall() {
         variant: "destructive",
       });
     }
+  });
+}
+
+export function useCallAll() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest(api.calls.callAll.method, api.calls.callAll.path);
+      return res.json() as Promise<{ initiated: number; errors: number }>;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Calls Initiated",
+        description: `${data.initiated} call${data.initiated !== 1 ? "s" : ""} started${data.errors > 0 ? `, ${data.errors} failed` : ""}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: [api.calls.list.path] });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to initiate calls",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 }

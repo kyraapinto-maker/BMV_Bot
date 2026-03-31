@@ -66,6 +66,13 @@ export const api = {
         404: errorSchemas.notFound,
       },
     },
+    callAll: {
+      method: 'POST' as const,
+      path: '/api/calls/all' as const,
+      responses: {
+        200: z.object({ initiated: z.number(), errors: z.number() }),
+      },
+    },
   },
   opportunities: {
     list: {

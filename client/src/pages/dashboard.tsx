@@ -1,25 +1,49 @@
 import { useProperties } from "@/hooks/use-properties";
+import { useCallAll } from "@/hooks/use-calls";
 import { PropertyCard } from "@/components/property-card";
-import { Building, Sparkles } from "lucide-react";
+import { Building, Sparkles, PhoneForwarded, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   const { data: properties, isLoading, error } = useProperties();
+  const callAll = useCallAll();
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-primary/10 text-primary rounded-lg">
-            <Sparkles className="w-5 h-5" />
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold font-display text-foreground">
+                Opportunities
+              </h1>
+            </div>
+            <p className="text-muted-foreground text-lg max-w-2xl">
+              Properties stuck on the market that require modernization. Review and instruct the AI to call agencies.
+            </p>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold font-display text-foreground">
-            Opportunities
-          </h1>
+
+          {properties && properties.length > 0 && (
+            <Button
+              onClick={() => callAll.mutate()}
+              disabled={callAll.isPending}
+              size="lg"
+              className="shrink-0 gap-2"
+              data-testid="button-call-all"
+            >
+              {callAll.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <PhoneForwarded className="w-4 h-4" />
+              )}
+              {callAll.isPending ? "Calling…" : "Call All Agencies"}
+            </Button>
+          )}
         </div>
-        <p className="text-muted-foreground text-lg max-w-2xl">
-          Properties stuck on the market that require modernization. Review and instruct the AI to call agencies.
-        </p>
       </div>
 
       {isLoading ? (

@@ -2,7 +2,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Trash2, Loader2, Plus, User, Phone, Mail, MapPin, Clock, BookOpen, Check } from "lucide-react";
+import {
+  Trash2,
+  Loader2,
+  Plus,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  BookOpen,
+  Check,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,20 +61,26 @@ export default function Opportunities() {
 
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const res = await apiRequest("POST", api.opportunities.create.path, values);
+      const res = await apiRequest(
+        "POST",
+        api.opportunities.create.path,
+        values,
+      );
       return res.json();
     },
     onSuccess: () => {
       toast({
-        title: "Opportunity created",
+        title: "User created",
         description: "Your details have been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: [api.opportunities.list.path] });
+      queryClient.invalidateQueries({
+        queryKey: [api.opportunities.list.path],
+      });
       form.reset();
     },
     onError: (error) => {
       toast({
-        title: "Failed to create opportunity",
+        title: "Failed to create user",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
@@ -72,20 +89,28 @@ export default function Opportunities() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", buildUrl(api.opportunities.delete.path, { id }));
+      await apiRequest(
+        "DELETE",
+        buildUrl(api.opportunities.delete.path, { id }),
+      );
     },
     onSuccess: () => {
       toast({
-        title: "Opportunity removed",
+        title: "User removed",
         description: "The entry has been deleted.",
       });
-      queryClient.invalidateQueries({ queryKey: [api.opportunities.list.path] });
+      queryClient.invalidateQueries({
+        queryKey: [api.opportunities.list.path],
+      });
     },
   });
 
   const activateMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest("POST", buildUrl(api.opportunities.activate.path, { id }));
+      const res = await apiRequest(
+        "POST",
+        buildUrl(api.opportunities.activate.path, { id }),
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -93,7 +118,9 @@ export default function Opportunities() {
         title: "Profile selected",
         description: "This profile is now active for calls.",
       });
-      queryClient.invalidateQueries({ queryKey: [api.opportunities.list.path] });
+      queryClient.invalidateQueries({
+        queryKey: [api.opportunities.list.path],
+      });
     },
   });
 
@@ -104,7 +131,10 @@ export default function Opportunities() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold font-display text-foreground" data-testid="text-page-title">
+        <h1
+          className="text-3xl font-bold font-display text-foreground"
+          data-testid="text-page-title"
+        >
           Users
         </h1>
         <p className="text-muted-foreground text-lg">
@@ -117,12 +147,15 @@ export default function Opportunities() {
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-bold font-display flex items-center gap-2">
               <Plus className="w-5 h-5 text-primary" />
-              New Opportunity
+              New User
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-5"
+              >
                 <FormField
                   control={form.control}
                   name="name"
@@ -268,7 +301,7 @@ export default function Opportunities() {
                   ) : (
                     <div className="flex items-center gap-2">
                       <Plus className="w-4 h-4" />
-                      <span>Create Opportunity</span>
+                      <span>Create User</span>
                     </div>
                   )}
                 </Button>
@@ -278,7 +311,10 @@ export default function Opportunities() {
         </Card>
 
         <div className="space-y-4">
-          <h2 className="text-xl font-bold font-display text-foreground" data-testid="text-saved-title">
+          <h2
+            className="text-xl font-bold font-display text-foreground"
+            data-testid="text-saved-title"
+          >
             Saved Users
           </h2>
 
@@ -290,7 +326,9 @@ export default function Opportunities() {
             <Card className="border-dashed border-border/50">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <User className="w-10 h-10 text-muted-foreground/40 mb-3" />
-                <p className="text-muted-foreground font-medium">No opportunities yet</p>
+                <p className="text-muted-foreground font-medium">
+                  No users yet
+                </p>
                 <p className="text-sm text-muted-foreground/70 mt-1">
                   Fill out the form to create your first one.
                 </p>
@@ -302,9 +340,7 @@ export default function Opportunities() {
                 <Card
                   key={opp.id}
                   className={`border-border/50 shadow-sm shadow-black/5 hover:shadow-md transition-all cursor-pointer ${
-                    opp.active
-                      ? "ring-2 ring-primary border-primary/40"
-                      : ""
+                    opp.active ? "ring-2 ring-primary border-primary/40" : ""
                   }`}
                   data-testid={`card-opportunity-${opp.id}`}
                   onClick={() => {
@@ -326,7 +362,10 @@ export default function Opportunities() {
                         </div>
                         <div className="space-y-2 flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-foreground truncate" data-testid={`text-name-${opp.id}`}>
+                            <h3
+                              className="font-bold text-foreground truncate"
+                              data-testid={`text-name-${opp.id}`}
+                            >
                               {opp.name}
                             </h3>
                             {opp.active && (
@@ -350,13 +389,17 @@ export default function Opportunities() {
                             </div>
                             <div className="flex items-center gap-1.5">
                               <Clock className="w-3.5 h-3.5" />
-                              <span className="truncate">{opp.availability}</span>
+                              <span className="truncate">
+                                {opp.availability}
+                              </span>
                             </div>
                           </div>
                           {opp.knowledgeBase && (
                             <div className="flex items-start gap-1.5 text-sm text-muted-foreground mt-1">
                               <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                              <span className="line-clamp-2">{opp.knowledgeBase}</span>
+                              <span className="line-clamp-2">
+                                {opp.knowledgeBase}
+                              </span>
                             </div>
                           )}
                         </div>

@@ -133,6 +133,43 @@ export async function registerRoutes(
     res.status(200).json(callsList);
   });
 
+  app.post(api.calls.callAll.path, async (req, res) => {
+    try {
+      const allProperties = await storage.getProperties();
+      let initiated = 0;
+      let errors = 0;
+
+      await Promise.all(
+        allProperties.map(async (property) => {
+          if (!property.uniqueIndex) return;
+          try {
+            const newCall = await storage.createCall({
+              propertyId: property.id,
+              propertyUniqueIndex: property.uniqueIndex,
+            });
+            await fetch(
+              "https://zywrcov6gl5hx5urwlykshhowa0rnopp.lambda-url.us-east-1.on.aws/",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ property_id: property.id, call_id: newCall.id }),
+              }
+            );
+            initiated++;
+          } catch {
+            errors++;
+          }
+        })
+      );
+
+      res.status(200).json({ initiated, errors });
+    } catch (err) {
+      res.status(500).json({
+        message: err instanceof Error ? err.message : "Internal Server Error",
+      });
+    }
+  });
+
   app.post(api.calls.create.path, async (req, res) => {
     try {
       const uniqueIndex = req.params.unique_index;
