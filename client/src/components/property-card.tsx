@@ -4,6 +4,7 @@ import {
   ExternalLink,
   Sparkles,
   Phone,
+  PhoneCall,
   Trash2,
   Loader2,
 } from "lucide-react";
@@ -24,9 +25,10 @@ import { api, buildUrl } from "@shared/routes";
 
 interface PropertyCardProps {
   property: Property;
+  hasBeenCalled?: boolean;
 }
 
-export function PropertyCard({ property }: PropertyCardProps) {
+export function PropertyCard({ property, hasBeenCalled = false }: PropertyCardProps) {
   const { toast } = useToast();
   const { mutate: initiateCall, isPending: isCalling } = useCreateCall();
 
@@ -70,15 +72,27 @@ export function PropertyCard({ property }: PropertyCardProps) {
               </p>
             )}
           </div>
-          {property.needsWork && (
-            <Badge
-              variant="secondary"
-              className="bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 border-orange-500/20 shrink-0 font-semibold shadow-none"
-            >
-              <Sparkles className="w-3 h-3 mr-1" />
-              Needs Work
-            </Badge>
-          )}
+          <div className="flex flex-col gap-1.5 items-end shrink-0">
+            {hasBeenCalled && (
+              <Badge
+                variant="secondary"
+                className="bg-green-500/10 text-green-700 hover:bg-green-500/20 border-green-500/20 font-semibold shadow-none"
+                data-testid={`badge-called-${property.id}`}
+              >
+                <PhoneCall className="w-3 h-3 mr-1" />
+                Called
+              </Badge>
+            )}
+            {property.needsWork && (
+              <Badge
+                variant="secondary"
+                className="bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 border-orange-500/20 font-semibold shadow-none"
+              >
+                <Sparkles className="w-3 h-3 mr-1" />
+                Needs Work
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
 

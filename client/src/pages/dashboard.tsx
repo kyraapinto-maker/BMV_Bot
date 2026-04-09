@@ -1,5 +1,5 @@
 import { useProperties } from "@/hooks/use-properties";
-import { useCallAll } from "@/hooks/use-calls";
+import { useCallAll, useCalls } from "@/hooks/use-calls";
 import { PropertyCard } from "@/components/property-card";
 import { Building, Sparkles, PhoneForwarded, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 export default function Dashboard() {
   const { data: properties, isLoading, error } = useProperties();
   const callAll = useCallAll();
+  const { data: calls } = useCalls();
+
+  const calledPropertyIds = new Set((calls ?? []).map((c) => c.propertyId));
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -81,7 +84,11 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {properties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
+            <PropertyCard
+              key={property.id}
+              property={property}
+              hasBeenCalled={calledPropertyIds.has(property.id)}
+            />
           ))}
         </div>
       )}
