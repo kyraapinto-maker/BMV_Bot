@@ -93,6 +93,15 @@ export async function registerRoutes(
       if (body.num_bed !== undefined && body.num_beds === undefined) {
         body.num_beds = body.num_bed;
       }
+      if (typeof body.price === "string") {
+        body.price = Number(body.price.replace(/[^0-9.]/g, ""));
+      }
+      if (typeof body.daysOnMarket === "string") {
+        body.daysOnMarket = Number(body.daysOnMarket);
+      }
+      if (typeof body.num_beds === "string") {
+        body.num_beds = Number(body.num_beds);
+      }
 
       const input = api.properties.create.input.parse(body);
       const property = await storage.createProperty(input);

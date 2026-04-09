@@ -23,10 +23,12 @@ export default function Sourcing() {
     try {
       console.log(
         //"https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/?" + // Property Data
+        "https://tiui4gsyaup4x2zong3evcnzvm0hposx.lambda-url.us-east-1.on.aws/" + // Kyra Rightmove Scraper
           `?postcode=${encodeURIComponent(postcode)}`,
       );
       const res = await fetch(
-        "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/" +  // Property Data
+        // "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/" +  // Property Data
+        "https://tiui4gsyaup4x2zong3evcnzvm0hposx.lambda-url.us-east-1.on.aws/" + // Kyra Rightmove Scraper
           `?postcode=${encodeURIComponent(postcode)}`,
       );
       if (!res.ok) throw new Error("Search failed");
