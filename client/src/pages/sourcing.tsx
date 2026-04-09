@@ -22,11 +22,11 @@ export default function Sourcing() {
     setIsSearching(true);
     try {
       console.log(
-        "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/?" +
+        //"https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/?" + // Property Data
           `?postcode=${encodeURIComponent(postcode)}`,
       );
       const res = await fetch(
-        "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/" +
+        "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/" +  // Property Data
           `?postcode=${encodeURIComponent(postcode)}`,
       );
       if (!res.ok) throw new Error("Search failed");

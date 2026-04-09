@@ -54,7 +54,7 @@ function toProperty(item: Record<string, any>): Property {
     num_beds: item.num_beds ?? null,
     daysOnMarket: item.daysOnMarket ?? null,
     link: item.link,
-    needsWork: item.needsWork ?? true,
+    needsWork: item.needsWork ?? false,
     uniqueIndex: item.uniqueIndex ?? null,
   };
 }
@@ -125,7 +125,7 @@ export class DynamoStorage implements IStorage {
       num_beds: property.num_beds ?? null,
       daysOnMarket: property.daysOnMarket ?? null,
       link: property.link,
-      needsWork: property.needsWork ?? true,
+      needsWork: property.needsWork ?? false,
       uniqueIndex: nanoid(10),
     };
     await docClient.send(new PutCommand({ TableName: TABLES.properties, Item: item }));

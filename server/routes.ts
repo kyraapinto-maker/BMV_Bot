@@ -15,7 +15,6 @@ async function seedDatabase() {
       daysOnMarket: 120,
       num_beds: 2,
       link: "https://rightmove.co.uk/property/1",
-      needsWork: true,
     });
     await storage.createProperty({
       address: "45 Long Road, Manchester",
@@ -24,7 +23,6 @@ async function seedDatabase() {
       daysOnMarket: 200,
       num_beds: 3,
       link: "https://zoopla.co.uk/property/2",
-      needsWork: true,
     });
   }
 }
@@ -75,7 +73,6 @@ export async function registerRoutes(
         daysOnMarket: Math.floor(Math.random() * 200),
         num_beds: 2 + Math.floor(Math.random() * 2),
         link: "https://rightmove.co.uk/property/s1",
-        needsWork: true,
       },
       {
         address: `Probate Sale, ${postcode}`,
@@ -84,7 +81,6 @@ export async function registerRoutes(
         daysOnMarket: Math.floor(Math.random() * 300),
         num_beds: 3 + Math.floor(Math.random() * 2),
         link: "https://zoopla.co.uk/property/s2",
-        needsWork: true,
       },
     ];
     res.status(200).json(results);
