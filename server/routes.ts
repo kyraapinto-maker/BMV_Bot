@@ -243,6 +243,21 @@ export async function registerRoutes(
     }
   });
 
+  app.patch(api.opportunities.update.path, async (req, res) => {
+    try {
+      const id = req.params.id as any;
+      const input = api.opportunities.update.input.parse(req.body);
+      const updated = await storage.updateOpportunity(id, input);
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      res.status(200).json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join(".") });
+      }
+      res.status(500).json({ message: err instanceof Error ? err.message : "Internal Server Error" });
+    }
+  });
+
   app.delete(api.opportunities.delete.path, async (req, res) => {
     const id = req.params.id as any;
     await storage.deleteOpportunity(id);

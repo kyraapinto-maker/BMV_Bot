@@ -29,6 +29,7 @@ export interface IStorage {
   getOpportunities(): Promise<Opportunity[]>;
   createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity>;
   deleteOpportunity(id: number | string): Promise<void>;
+  updateOpportunity(id: number | string, data: Partial<InsertOpportunity>): Promise<Opportunity | undefined>;
   activateOpportunity(id: number | string): Promise<Opportunity>;
   backfillOpportunityUniqueIndexes(): Promise<void>;
 }
@@ -232,6 +233,30 @@ export class DynamoStorage implements IStorage {
 
   async deleteOpportunity(id: number | string): Promise<void> {
     await docClient.send(new DeleteCommand({ TableName: TABLES.opportunities, Key: { id: String(id) } }));
+  }
+
+  async updateOpportunity(id: number | string, data: Partial<InsertOpportunity>): Promise<Opportunity | undefined> {
+    const targetId = String(id);
+    const existing = await docClient.send(new GetCommand({ TableName: TABLES.opportunities, Key: { id: targetId } }));
+    if (!existing.Item) return undefined;
+    const fields = Object.entries(data).filter(([, v]) => v !== undefined);
+    if (fields.length === 0) return toOpportunity(existing.Item);
+    const setExpr = fields.map(([k], i) => `#f${i} = :v${i}`).join(", ");
+    const exprNames: Record<string, string> = {};
+    const exprValues: Record<string, any> = {};
+    fields.forEach(([k, v], i) => {
+      exprNames[`#f${i}`] = k;
+      exprValues[`:v${i}`] = v;
+    });
+    await docClient.send(new UpdateCommand({
+      TableName: TABLES.opportunities,
+      Key: { id: targetId },
+      UpdateExpression: `SET ${setExpr}`,
+      ExpressionAttributeNames: exprNames,
+      ExpressionAttributeValues: exprValues,
+    }));
+    const updated = await docClient.send(new GetCommand({ TableName: TABLES.opportunities, Key: { id: targetId } }));
+    return toOpportunity(updated.Item!);
   }
 
   async activateOpportunity(id: number | string): Promise<Opportunity> {

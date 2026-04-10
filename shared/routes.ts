@@ -91,6 +91,15 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/opportunities/:id' as const,
+      input: insertOpportunitySchema.partial(),
+      responses: {
+        200: z.custom<typeof opportunities.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
     delete: {
       method: 'DELETE' as const,
       path: '/api/opportunities/:id' as const,

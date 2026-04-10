@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +14,7 @@ import {
   Clock,
   BookOpen,
   Check,
+  Pencil,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { api, buildUrl } from "@shared/routes";
 import { apiRequest } from "@/lib/queryClient";
@@ -39,15 +47,20 @@ const formSchema = insertOpportunitySchema.extend({
   availability: z.string().min(1, "Availability is required"),
 });
 
-export default function Opportunities() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+type FormValues = z.infer<typeof formSchema>;
 
-  const { data: opportunities = [], isLoading } = useQuery<Opportunity[]>({
-    queryKey: [api.opportunities.list.path],
-  });
-
-  const form = useForm<z.infer<typeof formSchema>>({
+function UserForm({
+  defaultValues,
+  onSubmit,
+  isPending,
+  submitLabel,
+}: {
+  defaultValues: Partial<FormValues>;
+  onSubmit: (values: FormValues) => void;
+  isPending: boolean;
+  submitLabel: string;
+}) {
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -56,27 +69,162 @@ export default function Opportunities() {
       address: "",
       availability: "",
       knowledgeBase: "",
+      ...defaultValues,
     },
   });
 
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <User className="w-4 h-4 text-muted-foreground" />
+                Name
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Your full name" {...field} data-testid="input-name" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-muted-foreground" />
+                Phone Number
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="+44 7700 900000" type="tel" {...field} data-testid="input-phone" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-muted-foreground" />
+                Email
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="you@example.com" type="email" {...field} data-testid="input-email" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                Address
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Your address" {...field} data-testid="input-address" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="availability"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                Availability
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Weekdays 9am-5pm, Saturdays" {...field} data-testid="input-availability" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="knowledgeBase"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-muted-foreground" />
+                Knowledge Base
+              </FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Any specific information or notes you want the AI agent to include when calling..."
+                  className="min-h-[100px] resize-none"
+                  {...field}
+                  value={field.value ?? ""}
+                  data-testid="input-knowledge-base"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full rounded-xl"
+          disabled={isPending}
+          data-testid="button-submit-opportunity"
+        >
+          {isPending ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Saving...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              <span>{submitLabel}</span>
+            </div>
+          )}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+export default function Opportunities() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [editingUser, setEditingUser] = useState<Opportunity | null>(null);
+
+  const { data: opportunities = [], isLoading } = useQuery<Opportunity[]>({
+    queryKey: [api.opportunities.list.path],
+  });
+
   const createMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const res = await apiRequest(
-        "POST",
-        api.opportunities.create.path,
-        values,
-      );
+    mutationFn: async (values: FormValues) => {
+      const res = await apiRequest("POST", api.opportunities.create.path, values);
       return res.json();
     },
     onSuccess: () => {
-      toast({
-        title: "User created",
-        description: "Your details have been saved successfully.",
-      });
-      queryClient.invalidateQueries({
-        queryKey: [api.opportunities.list.path],
-      });
-      form.reset();
+      toast({ title: "User created", description: "Your details have been saved successfully." });
+      queryClient.invalidateQueries({ queryKey: [api.opportunities.list.path] });
     },
     onError: (error) => {
       toast({
@@ -87,54 +235,50 @@ export default function Opportunities() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest(
-        "DELETE",
-        buildUrl(api.opportunities.delete.path, { id }),
-      );
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, values }: { id: string | number; values: FormValues }) => {
+      const res = await apiRequest("PATCH", buildUrl(api.opportunities.update.path, { id }), values);
+      return res.json();
     },
     onSuccess: () => {
+      toast({ title: "User updated", description: "Changes have been saved." });
+      queryClient.invalidateQueries({ queryKey: [api.opportunities.list.path] });
+      setEditingUser(null);
+    },
+    onError: (error) => {
       toast({
-        title: "User removed",
-        description: "The entry has been deleted.",
+        title: "Failed to update user",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
       });
-      queryClient.invalidateQueries({
-        queryKey: [api.opportunities.list.path],
-      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", buildUrl(api.opportunities.delete.path, { id }));
+    },
+    onSuccess: () => {
+      toast({ title: "User removed", description: "The entry has been deleted." });
+      queryClient.invalidateQueries({ queryKey: [api.opportunities.list.path] });
     },
   });
 
   const activateMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest(
-        "POST",
-        buildUrl(api.opportunities.activate.path, { id }),
-      );
+      const res = await apiRequest("POST", buildUrl(api.opportunities.activate.path, { id }));
       return res.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Profile selected",
-        description: "This profile is now active for calls.",
-      });
-      queryClient.invalidateQueries({
-        queryKey: [api.opportunities.list.path],
-      });
+      toast({ title: "Profile selected", description: "This profile is now active for calls." });
+      queryClient.invalidateQueries({ queryKey: [api.opportunities.list.path] });
     },
   });
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    createMutation.mutate(values);
-  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2">
-        <h1
-          className="text-3xl font-bold font-display text-foreground"
-          data-testid="text-page-title"
-        >
+        <h1 className="text-3xl font-bold font-display text-foreground" data-testid="text-page-title">
           Users
         </h1>
         <p className="text-muted-foreground text-lg">
@@ -151,170 +295,17 @@ export default function Opportunities() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-5"
-              >
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Your full name"
-                          {...field}
-                          data-testid="input-name"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-muted-foreground" />
-                        Phone Number
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="+44 7700 900000"
-                          type="tel"
-                          {...field}
-                          data-testid="input-phone"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-muted-foreground" />
-                        Email
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="you@example.com"
-                          type="email"
-                          {...field}
-                          data-testid="input-email"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        Address
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Your address"
-                          {...field}
-                          data-testid="input-address"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="availability"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        Availability
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g. Weekdays 9am-5pm, Saturdays"
-                          {...field}
-                          data-testid="input-availability"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="knowledgeBase"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-muted-foreground" />
-                        Knowledge Base
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Any specific information or notes you want the AI agent to include when calling..."
-                          className="min-h-[100px] resize-none"
-                          {...field}
-                          value={field.value ?? ""}
-                          data-testid="input-knowledge-base"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full rounded-xl"
-                  disabled={createMutation.isPending}
-                  data-testid="button-submit-opportunity"
-                >
-                  {createMutation.isPending ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Saving...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Plus className="w-4 h-4" />
-                      <span>Create User</span>
-                    </div>
-                  )}
-                </Button>
-              </form>
-            </Form>
+            <UserForm
+              defaultValues={{}}
+              onSubmit={(values) => createMutation.mutate(values)}
+              isPending={createMutation.isPending}
+              submitLabel="Create User"
+            />
           </CardContent>
         </Card>
 
         <div className="space-y-4">
-          <h2
-            className="text-xl font-bold font-display text-foreground"
-            data-testid="text-saved-title"
-          >
+          <h2 className="text-xl font-bold font-display text-foreground" data-testid="text-saved-title">
             Saved Users
           </h2>
 
@@ -326,12 +317,8 @@ export default function Opportunities() {
             <Card className="border-dashed border-border/50">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <User className="w-10 h-10 text-muted-foreground/40 mb-3" />
-                <p className="text-muted-foreground font-medium">
-                  No users yet
-                </p>
-                <p className="text-sm text-muted-foreground/70 mt-1">
-                  Fill out the form to create your first one.
-                </p>
+                <p className="text-muted-foreground font-medium">No users yet</p>
+                <p className="text-sm text-muted-foreground/70 mt-1">Fill out the form to create your first one.</p>
               </CardContent>
             </Card>
           ) : (
@@ -343,9 +330,7 @@ export default function Opportunities() {
                     opp.active ? "ring-2 ring-primary border-primary/40" : ""
                   }`}
                   data-testid={`card-opportunity-${opp.id}`}
-                  onClick={() => {
-                    if (!opp.active) activateMutation.mutate(opp.id);
-                  }}
+                  onClick={() => { if (!opp.active) activateMutation.mutate(opp.id); }}
                 >
                   <CardContent className="p-5">
                     <div className="flex justify-between items-start gap-4">
@@ -362,10 +347,7 @@ export default function Opportunities() {
                         </div>
                         <div className="space-y-2 flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3
-                              className="font-bold text-foreground truncate"
-                              data-testid={`text-name-${opp.id}`}
-                            >
+                            <h3 className="font-bold text-foreground truncate" data-testid={`text-name-${opp.id}`}>
                               {opp.name}
                             </h3>
                             {opp.active && (
@@ -389,38 +371,48 @@ export default function Opportunities() {
                             </div>
                             <div className="flex items-center gap-1.5">
                               <Clock className="w-3.5 h-3.5" />
-                              <span className="truncate">
-                                {opp.availability}
-                              </span>
+                              <span className="truncate">{opp.availability}</span>
                             </div>
                           </div>
                           {opp.knowledgeBase && (
                             <div className="flex items-start gap-1.5 text-sm text-muted-foreground mt-1">
                               <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                              <span className="line-clamp-2">
-                                {opp.knowledgeBase}
-                              </span>
+                              <span className="line-clamp-2">{opp.knowledgeBase}</span>
                             </div>
                           )}
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0 rounded-xl"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteMutation.mutate(opp.id);
-                        }}
-                        disabled={deleteMutation.isPending}
-                        data-testid={`button-delete-opportunity-${opp.id}`}
-                      >
-                        {deleteMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </Button>
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="rounded-xl"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingUser(opp);
+                          }}
+                          data-testid={`button-edit-opportunity-${opp.id}`}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="rounded-xl"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteMutation.mutate(opp.id);
+                          }}
+                          disabled={deleteMutation.isPending}
+                          data-testid={`button-delete-opportunity-${opp.id}`}
+                        >
+                          {deleteMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -429,6 +421,32 @@ export default function Opportunities() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!editingUser} onOpenChange={(open) => { if (!open) setEditingUser(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold font-display">
+              <Pencil className="w-5 h-5 text-primary" />
+              Edit User
+            </DialogTitle>
+          </DialogHeader>
+          {editingUser && (
+            <UserForm
+              defaultValues={{
+                name: editingUser.name,
+                phone: editingUser.phone,
+                email: editingUser.email,
+                address: editingUser.address,
+                availability: editingUser.availability,
+                knowledgeBase: editingUser.knowledgeBase ?? "",
+              }}
+              onSubmit={(values) => updateMutation.mutate({ id: editingUser.id, values })}
+              isPending={updateMutation.isPending}
+              submitLabel="Save Changes"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
