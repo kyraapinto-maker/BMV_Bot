@@ -29,7 +29,7 @@ export function AppSidebar() {
           <Building2 className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-lg font-bold font-display leading-tight text-foreground">PropScout</h2>
+          <h2 className="text-lg font-bold font-display leading-tight text-foreground">Bob the Caller</h2>
           <p className="text-xs text-muted-foreground font-medium">AI Agency Caller</p>
         </div>
       </SidebarHeader>
