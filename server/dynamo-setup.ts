@@ -69,6 +69,12 @@ export async function ensureTables() {
     [{ AttributeName: "counterName", AttributeType: "S" }]
   );
 
+  await createTableIfNotExists(
+    TABLES.users,
+    [{ AttributeName: "id", KeyType: "HASH" }],
+    [{ AttributeName: "id", AttributeType: "S" }]
+  );
+
   for (const name of ["properties", "calls"]) {
     let attempts = 0;
     while (attempts < 5) {

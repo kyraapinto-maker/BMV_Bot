@@ -1,30 +1,13 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { ensureTables } from "./dynamo-setup";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { isAuthenticated } from "./auth";
 
-async function seedDatabase() {
-  const existingProperties = await storage.getProperties();
-  if (existingProperties.length === 0) {
-    await storage.createProperty({
-      address: "123 Fake St, London",
-      postcode: "E1 6AN",
-      price: 250000,
-      daysOnMarket: 120,
-      num_beds: 2,
-      link: "https://rightmove.co.uk/property/1",
-    });
-    await storage.createProperty({
-      address: "45 Long Road, Manchester",
-      postcode: "M1 1AA",
-      price: 180000,
-      daysOnMarket: 200,
-      num_beds: 3,
-      link: "https://zoopla.co.uk/property/2",
-    });
-  }
+function userId(req: Request): string {
+  return (req.user as Express.User).id;
 }
 
 export async function registerRoutes(
@@ -32,10 +15,6 @@ export async function registerRoutes(
   app: Express,
 ): Promise<Server> {
   await ensureTables();
-
-  seedDatabase().catch((err) => {
-    console.error("Seeding failed:", err.message);
-  });
 
   storage.backfillUniqueIndexes().catch((err) => {
     console.error("Backfill failed:", err.message);
@@ -45,19 +24,18 @@ export async function registerRoutes(
     console.error("Opportunity backfill failed:", err.message);
   });
 
-  app.get(api.properties.list.path, async (req, res) => {
+  app.get(api.properties.list.path, isAuthenticated, async (req, res) => {
     try {
-      const propertiesList = await storage.getProperties();
+      const propertiesList = await storage.getProperties(userId(req));
       res.status(200).json(propertiesList);
     } catch (error) {
       res.status(500).json({
-        message:
-          error instanceof Error ? error.message : "Internal Server Error",
+        message: error instanceof Error ? error.message : "Internal Server Error",
       });
     }
   });
 
-  app.get(api.properties.search.path, async (req, res) => {
+  app.get(api.properties.search.path, isAuthenticated, async (req, res) => {
     const postcode = req.query.postcode as string;
     if (!postcode) {
       return res.status(400).json({ message: "Postcode is required" });
@@ -86,9 +64,8 @@ export async function registerRoutes(
     res.status(200).json(results);
   });
 
-  app.post(api.properties.create.path, async (req, res) => {
+  app.post(api.properties.create.path, isAuthenticated, async (req, res) => {
     try {
-      // Ensure num_beds is mapped correctly from possible num_bed or num_beds
       const body = { ...req.body };
       if (body.num_bed !== undefined && body.num_beds === undefined) {
         body.num_beds = body.num_bed;
@@ -104,7 +81,7 @@ export async function registerRoutes(
       }
 
       const input = api.properties.create.input.parse(body);
-      const property = await storage.createProperty(input);
+      const property = await storage.createProperty(input, userId(req));
       res.status(201).json(property);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -119,28 +96,29 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(api.properties.delete.path, async (req, res) => {
+  app.delete(api.properties.delete.path, isAuthenticated, async (req, res) => {
     const id = Number(req.params.id);
-    await storage.deleteProperty(id);
+    await storage.deleteProperty(id, userId(req));
     res.status(200).json({ message: "Property removed" });
   });
 
-  app.get(api.properties.get.path, async (req, res) => {
-    const property = await storage.getProperty(Number(req.params.id));
+  app.get(api.properties.get.path, isAuthenticated, async (req, res) => {
+    const property = await storage.getProperty(Number(req.params.id), userId(req));
     if (!property) {
       return res.status(404).json({ message: "Property not found" });
     }
     res.status(200).json(property);
   });
 
-  app.get(api.calls.list.path, async (req, res) => {
-    const callsList = await storage.getCalls();
+  app.get(api.calls.list.path, isAuthenticated, async (req, res) => {
+    const callsList = await storage.getCalls(userId(req));
     res.status(200).json(callsList);
   });
 
-  app.post(api.calls.callAll.path, async (req, res) => {
+  app.post(api.calls.callAll.path, isAuthenticated, async (req, res) => {
     try {
-      const allProperties = await storage.getProperties();
+      const uid = userId(req);
+      const allProperties = await storage.getProperties(uid);
       let initiated = 0;
       let errors = 0;
 
@@ -151,7 +129,7 @@ export async function registerRoutes(
             const newCall = await storage.createCall({
               propertyId: property.id,
               propertyUniqueIndex: property.uniqueIndex,
-            });
+            }, uid);
             await fetch(
               "https://zywrcov6gl5hx5urwlykshhowa0rnopp.lambda-url.us-east-1.on.aws/",
               {
@@ -175,8 +153,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post(api.calls.create.path, async (req, res) => {
+  app.post(api.calls.create.path, isAuthenticated, async (req, res) => {
     try {
+      const uid = userId(req);
       const uniqueIndex = req.params.unique_index;
       const property = await storage.getPropertyByUniqueIndex(uniqueIndex);
       if (!property) {
@@ -186,7 +165,7 @@ export async function registerRoutes(
       const newCall = await storage.createCall({
         propertyId: property.id,
         propertyUniqueIndex: uniqueIndex,
-      });
+      }, uid);
 
       const lambdaResponse = await fetch(
         "https://zywrcov6gl5hx5urwlykshhowa0rnopp.lambda-url.us-east-1.on.aws/",
@@ -198,7 +177,7 @@ export async function registerRoutes(
       );
 
       const responseText = await lambdaResponse.text();
-      let lambdaResult: any;
+      let lambdaResult: unknown;
       try {
         lambdaResult = JSON.parse(responseText);
       } catch {
@@ -213,22 +192,21 @@ export async function registerRoutes(
     }
   });
 
-  app.get(api.opportunities.list.path, async (req, res) => {
+  app.get(api.opportunities.list.path, isAuthenticated, async (req, res) => {
     try {
-      const list = await storage.getOpportunities();
+      const list = await storage.getOpportunities(userId(req));
       res.status(200).json(list);
     } catch (error) {
       res.status(500).json({
-        message:
-          error instanceof Error ? error.message : "Internal Server Error",
+        message: error instanceof Error ? error.message : "Internal Server Error",
       });
     }
   });
 
-  app.post(api.opportunities.create.path, async (req, res) => {
+  app.post(api.opportunities.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.opportunities.create.input.parse(req.body);
-      const opportunity = await storage.createOpportunity(input);
+      const opportunity = await storage.createOpportunity(input, userId(req));
       res.status(201).json(opportunity);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -243,12 +221,12 @@ export async function registerRoutes(
     }
   });
 
-  app.patch(api.opportunities.update.path, async (req, res) => {
+  app.patch(api.opportunities.update.path, isAuthenticated, async (req, res) => {
     try {
-      const id = req.params.id as any;
+      const id = req.params.id;
       const input = api.opportunities.update.input.parse(req.body);
-      const updated = await storage.updateOpportunity(id, input);
-      if (!updated) return res.status(404).json({ message: "User not found" });
+      const updated = await storage.updateOpportunity(id, input, userId(req));
+      if (!updated) return res.status(404).json({ message: "Opportunity not found" });
       res.status(200).json(updated);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -258,16 +236,16 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(api.opportunities.delete.path, async (req, res) => {
-    const id = req.params.id as any;
-    await storage.deleteOpportunity(id);
+  app.delete(api.opportunities.delete.path, isAuthenticated, async (req, res) => {
+    const id = req.params.id;
+    await storage.deleteOpportunity(id, userId(req));
     res.status(200).json({ message: "Opportunity removed" });
   });
 
-  app.post(api.opportunities.activate.path, async (req, res) => {
+  app.post(api.opportunities.activate.path, isAuthenticated, async (req, res) => {
     try {
-      const id = req.params.id as any;
-      const updated = await storage.activateOpportunity(id);
+      const id = req.params.id;
+      const updated = await storage.activateOpportunity(id, userId(req));
       if (!updated) {
         return res.status(404).json({ message: "Opportunity not found" });
       }

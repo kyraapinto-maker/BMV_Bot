@@ -1,4 +1,4 @@
-import { Home, PhoneCall, Building2, Search, Briefcase } from "lucide-react";
+import { Home, PhoneCall, Building2, Search, Briefcase, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -10,7 +10,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
+import { useLogout, useAuth } from "@/hooks/use-auth";
 
 const items = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -21,6 +23,8 @@ const items = [
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const logout = useLogout();
+  const { data: user } = useAuth();
 
   return (
     <Sidebar variant="inset">
@@ -59,6 +63,23 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-4 border-t border-border space-y-2">
+        {user && (
+          <p className="text-xs text-muted-foreground truncate" data-testid="text-user-email">
+            {user.email}
+          </p>
+        )}
+        <SidebarMenuButton
+          onClick={() => logout.mutate()}
+          disabled={logout.isPending}
+          tooltip="Sign out"
+          className="w-full text-muted-foreground hover:text-destructive transition-colors"
+          data-testid="button-logout"
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="font-medium">Sign out</span>
+        </SidebarMenuButton>
+      </SidebarFooter>
     </Sidebar>
   );
 }
