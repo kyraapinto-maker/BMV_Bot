@@ -7,6 +7,8 @@ import { storage } from "./storage";
 import { registerSchema } from "@shared/schema";
 import type { User } from "@shared/schema";
 import { z } from "zod";
+import { docClient, TABLES } from "./db";
+import { GetCommand, PutCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 
 declare global {
   namespace Express {
@@ -21,14 +23,80 @@ declare global {
 
 const SALT_ROUNDS = 12;
 
+class DynamoSessionStore extends session.Store {
+  async get(sid: string, callback: (err: any, session?: any) => void) {
+    try {
+      const result = await docClient.send(
+        new GetCommand({ TableName: TABLES.sessions, Key: { sid } })
+      );
+      if (!result.Item) return callback(null, null);
+      if (result.Item.expires && result.Item.expires < Date.now()) {
+        return callback(null, null);
+      }
+      callback(null, result.Item.data);
+    } catch (err) {
+      callback(err);
+    }
+  }
+
+  async set(sid: string, sessionData: any, callback: (err?: any) => void) {
+    try {
+      const maxAge = sessionData.cookie?.maxAge ?? 7 * 24 * 60 * 60 * 1000;
+      const expires = Date.now() + maxAge;
+      await docClient.send(
+        new PutCommand({
+          TableName: TABLES.sessions,
+          Item: { sid, data: sessionData, expires },
+        })
+      );
+      callback();
+    } catch (err) {
+      callback(err);
+    }
+  }
+
+  async destroy(sid: string, callback: (err?: any) => void) {
+    try {
+      await docClient.send(
+        new DeleteCommand({ TableName: TABLES.sessions, Key: { sid } })
+      );
+      callback();
+    } catch (err) {
+      callback(err);
+    }
+  }
+
+  async touch(sid: string, sessionData: any, callback: (err?: any) => void) {
+    return this.set(sid, sessionData, callback);
+  }
+}
+
+async function seedAdminUser() {
+  const email = process.env.ADMIN_EMAIL || "admin@bobthecaller.com";
+  const password = process.env.ADMIN_PASSWORD || "Admin1234!";
+  try {
+    const existing = await storage.getUserByEmail(email);
+    if (!existing) {
+      const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+      await storage.createUser(email, passwordHash);
+      console.log(`[auth] Admin user created: ${email}`);
+    }
+  } catch (err) {
+    console.error("[auth] Failed to seed admin user:", err);
+  }
+}
+
 export function setupAuth(app: Express) {
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret && process.env.NODE_ENV === "production") {
     throw new Error("SESSION_SECRET environment variable must be set in production");
   }
 
+  app.set("trust proxy", 1);
+
   app.use(
     session({
+      store: new DynamoSessionStore(),
       secret: sessionSecret || "propscout-dev-session-secret",
       resave: false,
       saveUninitialized: false,
@@ -119,6 +187,8 @@ export function setupAuth(app: Express) {
     }
     res.status(200).json({ id: req.user.id, email: req.user.email });
   });
+
+  seedAdminUser();
 }
 
 export function isAuthenticated(req: Request, res: Response, next: NextFunction) {

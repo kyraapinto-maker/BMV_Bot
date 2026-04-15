@@ -19,4 +19,5 @@ export const TABLES = {
   opportunities: "propscout_users",
   counters: "propscout_counters",
   users: "propscout_auth_users",
+  sessions: "propscout_sessions",
 };

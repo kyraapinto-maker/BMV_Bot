@@ -75,6 +75,12 @@ export async function ensureTables() {
     [{ AttributeName: "id", AttributeType: "S" }]
   );
 
+  await createTableIfNotExists(
+    TABLES.sessions,
+    [{ AttributeName: "sid", KeyType: "HASH" }],
+    [{ AttributeName: "sid", AttributeType: "S" }]
+  );
+
   for (const name of ["properties", "calls"]) {
     let attempts = 0;
     while (attempts < 5) {
