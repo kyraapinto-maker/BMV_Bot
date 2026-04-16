@@ -71,6 +71,8 @@ function toCall(item: Record<string, unknown>): Call {
     propertyUniqueIndex: (item.propertyUniqueIndex as string) ?? null,
     status: (item.status as string) ?? null,
     result: (item.result as string) ?? null,
+    connection: (item.connection as string) ?? null,
+    nextAction: ((item.nextAction ?? item.next_action) as string) ?? null,
     offeredPrice: (item.offeredPrice as number) ?? null,
     comment: (item.comment as string) ?? null,
     viewingDate: item.viewingDate ? new Date(item.viewingDate as string) : null,
