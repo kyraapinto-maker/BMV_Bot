@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Clock,
   MapPin,
@@ -7,6 +8,7 @@ import {
   PhoneCall,
   Trash2,
   Loader2,
+  MessageSquarePlus,
 } from "lucide-react";
 import {
   Card,
@@ -16,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { type Property } from "@shared/schema";
 import { useCreateCall } from "@/hooks/use-calls";
 import { useMutation } from "@tanstack/react-query";
@@ -31,6 +34,7 @@ interface PropertyCardProps {
 export function PropertyCard({ property, hasBeenCalled = false }: PropertyCardProps) {
   const { toast } = useToast();
   const { mutate: initiateCall, isPending: isCalling } = useCreateCall();
+  const [questions, setQuestions] = useState("");
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -114,6 +118,20 @@ export function PropertyCard({ property, hasBeenCalled = false }: PropertyCardPr
             {property.daysOnMarket} days on market
           </span>
         </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <MessageSquarePlus className="w-3.5 h-3.5" />
+            Questions for the agent
+          </div>
+          <Textarea
+            placeholder="e.g. Ask about the chain situation, whether offers have been made, and if the seller is flexible on price…"
+            value={questions}
+            onChange={(e) => setQuestions(e.target.value)}
+            className="text-sm resize-none min-h-[80px] bg-background/60"
+            data-testid={`textarea-questions-${property.id}`}
+          />
+        </div>
       </CardContent>
 
       <CardFooter className="p-5 pt-4 border-t border-border/40 bg-muted/20 gap-3">
@@ -151,8 +169,9 @@ export function PropertyCard({ property, hasBeenCalled = false }: PropertyCardPr
 
           <Button
             className="flex-1 rounded-xl shadow-md shadow-primary/20 transition-all active:scale-[0.98]"
-            onClick={() => initiateCall(property.uniqueIndex!)}
+            onClick={() => initiateCall({ uniqueIndex: property.uniqueIndex!, questions })}
             disabled={isCalling}
+            data-testid={`button-call-${property.id}`}
           >
             {isCalling ? (
               <div className="flex items-center gap-2">

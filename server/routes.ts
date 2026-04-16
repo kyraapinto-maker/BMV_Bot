@@ -202,6 +202,10 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Property not found" });
       }
 
+      const questions = typeof req.body?.questions === "string" && req.body.questions.trim()
+        ? req.body.questions.trim()
+        : undefined;
+
       const newCall = await storage.createCall({
         propertyId: property.id,
         propertyUniqueIndex: uniqueIndex,
@@ -212,7 +216,7 @@ export async function registerRoutes(
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ property_id: property.id, call_id: newCall.id }),
+          body: JSON.stringify({ property_id: property.id, call_id: newCall.id, ...(questions ? { questions } : {}) }),
         },
       );
 

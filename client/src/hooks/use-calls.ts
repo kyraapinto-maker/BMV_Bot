@@ -21,12 +21,13 @@ export function useCreateCall() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (uniqueIndex: string) => {
+    mutationFn: async ({ uniqueIndex, questions }: { uniqueIndex: string; questions?: string }) => {
       const url = buildUrl(api.calls.create.path, { unique_index: uniqueIndex });
       const res = await fetch(url, {
         method: api.calls.create.method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ questions: questions?.trim() || undefined }),
       });
       
       if (!res.ok) {
