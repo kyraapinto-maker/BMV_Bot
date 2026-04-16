@@ -190,9 +190,20 @@ export default function CallHistory() {
                       }
                     </TableCell>
                     <TableCell>
-                      {call.result ? (
-                        <span className="text-sm text-foreground">{call.result}</span>
-                      ) : (
+                      {call.result ? (() => {
+                        const v = call.result.toLowerCase();
+                        if (v === "success") return (
+                          <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/20 shadow-none font-semibold">
+                            Success
+                          </Badge>
+                        );
+                        if (v === "failure") return (
+                          <Badge variant="secondary" className="bg-red-500/10 text-red-700 border-red-500/20 shadow-none font-semibold">
+                            Failure
+                          </Badge>
+                        );
+                        return <span className="text-sm text-foreground">{call.result}</span>;
+                      })() : (
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
