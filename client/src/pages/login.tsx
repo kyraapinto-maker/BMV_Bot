@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().min(1, "Email or username is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -40,8 +40,13 @@ export default function Login() {
       await login.mutateAsync(data);
       setLocation("/");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Login failed. Please try again.";
-      toast({ title: "Login failed", description: message, variant: "destructive" });
+      const message =
+        err instanceof Error ? err.message : "Login failed. Please try again.";
+      toast({
+        title: "Login failed",
+        description: message,
+        variant: "destructive",
+      });
     }
   }
 
@@ -53,8 +58,12 @@ export default function Login() {
             <Building2 className="w-8 h-8" />
           </div>
           <div className="text-center">
-            <h1 className="text-3xl font-bold font-display text-foreground">Bob the Caller</h1>
-            <p className="text-muted-foreground mt-1">Sign in to your account</p>
+            <h1 className="text-3xl font-bold font-display text-foreground">
+              Bob the Caller
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Sign in to your account
+            </p>
           </div>
         </div>
 
@@ -69,8 +78,8 @@ export default function Login() {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
-                        type="email"
-                        placeholder="you@example.com"
+                        type="text"
+                        placeholder="you@example.com or admin"
                         data-testid="input-email"
                         {...field}
                       />
@@ -117,7 +126,11 @@ export default function Login() {
 
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Link href="/signup" className="text-primary font-medium hover:underline" data-testid="link-signup">
+            <Link
+              href="/signup"
+              className="text-primary font-medium hover:underline"
+              data-testid="link-signup"
+            >
               Create one
             </Link>
           </p>
