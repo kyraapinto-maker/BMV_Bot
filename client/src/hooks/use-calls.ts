@@ -12,7 +12,8 @@ export function useCalls() {
       const data = await res.json();
       return api.calls.list.responses[200].parse(data);
     },
-    refetchInterval: 10000,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 }
 

@@ -7,8 +7,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  MessageSquare,
-  Banknote,
   FileText,
   ScrollText,
 } from "lucide-react";
@@ -155,7 +153,6 @@ export default function CallHistory() {
                   <TableHead className="font-semibold">Call Status</TableHead>
                   <TableHead className="font-semibold">Connection</TableHead>
                   <TableHead className="font-semibold">Next Action</TableHead>
-                  <TableHead className="font-semibold">Offered Price</TableHead>
                   <TableHead className="font-semibold text-center">Summary</TableHead>
                   <TableHead className="font-semibold">Viewing Date</TableHead>
                   <TableHead className="font-semibold text-center">Transcript</TableHead>
@@ -199,16 +196,6 @@ export default function CallHistory() {
                         <span className="text-sm text-foreground">{call.nextAction}</span>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {call.offeredPrice ? (
-                        <div className="flex items-center gap-1.5 text-foreground font-semibold">
-                          <Banknote className="w-4 h-4 text-green-600" />
-                          £{call.offeredPrice.toLocaleString()}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-xs italic">No offer</span>
                       )}
                     </TableCell>
                     <TableCell className="text-center">
