@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Home, PhoneCall, Building2, Search, Briefcase, LogOut, Users, ChevronDown, UserCheck } from "lucide-react";
+import {
+  Home,
+  PhoneCall,
+  Building2,
+  Search,
+  Briefcase,
+  LogOut,
+  Users,
+  ChevronDown,
+  UserCheck,
+} from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -13,14 +23,23 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { useLogout, useAuth, useImpersonate, useAdminUsers } from "@/hooks/use-auth";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  useLogout,
+  useAuth,
+  useImpersonate,
+  useAdminUsers,
+} from "@/hooks/use-auth";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const items = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Sourcing", url: "/sourcing", icon: Search },
-  { title: "Opportunities", url: "/opportunities", icon: Briefcase },
+  { title: "User Profiles", url: "/opportunities", icon: Briefcase },
   { title: "Call History", url: "/history", icon: PhoneCall },
 ];
 
@@ -47,8 +66,12 @@ export function AppSidebar() {
           <Building2 className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-lg font-bold font-display leading-tight text-foreground">Bob the Caller</h2>
-          <p className="text-xs text-muted-foreground font-medium">AI Agency Caller</p>
+          <h2 className="text-lg font-bold font-display leading-tight text-foreground">
+            Bob the Caller
+          </h2>
+          <p className="text-xs text-muted-foreground font-medium">
+            AI Agency Caller
+          </p>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -92,7 +115,9 @@ export function AppSidebar() {
                   >
                     <Users className="w-5 h-5" />
                     <span className="font-medium flex-1">View as User</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${usersOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${usersOpen ? "rotate-180" : ""}`}
+                    />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-1 ml-2 space-y-0.5">
@@ -101,24 +126,25 @@ export function AppSidebar() {
                       <Skeleton className="h-7 w-full" />
                       <Skeleton className="h-7 w-full" />
                     </div>
-                  ) : (adminUsers.data ?? [])
-                    .filter((u) => u.id !== user?.id)
-                    .map((u) => {
-                      const isActive = user?.impersonating?.id === u.id;
-                      return (
-                        <SidebarMenuButton
-                          key={u.id}
-                          onClick={() => impersonate.mutate(u.id)}
-                          disabled={impersonate.isPending}
-                          className={`w-full text-sm transition-all duration-200 ${isActive ? "bg-amber-500/10 text-amber-700" : ""}`}
-                          data-testid={`button-impersonate-${u.id}`}
-                        >
-                          <UserCheck className="w-4 h-4 shrink-0" />
-                          <span className="truncate">{u.email}</span>
-                        </SidebarMenuButton>
-                      );
-                    })
-                  }
+                  ) : (
+                    (adminUsers.data ?? [])
+                      .filter((u) => u.id !== user?.id)
+                      .map((u) => {
+                        const isActive = user?.impersonating?.id === u.id;
+                        return (
+                          <SidebarMenuButton
+                            key={u.id}
+                            onClick={() => impersonate.mutate(u.id)}
+                            disabled={impersonate.isPending}
+                            className={`w-full text-sm transition-all duration-200 ${isActive ? "bg-amber-500/10 text-amber-700" : ""}`}
+                            data-testid={`button-impersonate-${u.id}`}
+                          >
+                            <UserCheck className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{u.email}</span>
+                          </SidebarMenuButton>
+                        );
+                      })
+                  )}
                 </CollapsibleContent>
               </Collapsible>
             </SidebarGroupContent>
@@ -127,7 +153,10 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-border space-y-2">
         {user && (
-          <p className="text-xs text-muted-foreground truncate" data-testid="text-user-email">
+          <p
+            className="text-xs text-muted-foreground truncate"
+            data-testid="text-user-email"
+          >
             {user.email}
           </p>
         )}

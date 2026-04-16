@@ -162,9 +162,17 @@ export async function registerRoutes(
     res.status(200).json(callsList);
   });
 
+  const DAILY_CALL_LIMIT = 50;
+
   app.post(api.calls.callAll.path, isAuthenticated, async (req, res) => {
     try {
       const uid = userId(req);
+      if (!isAdminEmail((req.user as Express.User).email)) {
+        const todayCount = await storage.countCallsToday(uid);
+        if (todayCount >= DAILY_CALL_LIMIT) {
+          return res.status(429).json({ message: `Daily call limit of ${DAILY_CALL_LIMIT} reached. Limit resets at midnight.` });
+        }
+      }
       const allProperties = await storage.getProperties(uid);
       let initiated = 0;
       let errors = 0;
@@ -203,6 +211,12 @@ export async function registerRoutes(
   app.post(api.calls.create.path, isAuthenticated, async (req, res) => {
     try {
       const uid = userId(req);
+      if (!isAdminEmail((req.user as Express.User).email)) {
+        const todayCount = await storage.countCallsToday(uid);
+        if (todayCount >= DAILY_CALL_LIMIT) {
+          return res.status(429).json({ message: `Daily call limit of ${DAILY_CALL_LIMIT} reached. Limit resets at midnight.` });
+        }
+      }
       const uniqueIndex = req.params.unique_index;
       const property = await storage.getPropertyByUniqueIndex(uniqueIndex);
       if (!property) {

@@ -23,6 +23,7 @@ export interface IStorage {
   getProperty(id: number, userId: string): Promise<Property | undefined>;
   getPropertyByUniqueIndex(uniqueIndex: string): Promise<Property | undefined>;
   getCalls(userId: string): Promise<CallWithProperty[]>;
+  countCallsToday(userId: string): Promise<number>;
   createCall(call: InsertCall, userId: string): Promise<Call>;
   createProperty(property: InsertProperty, userId: string): Promise<Property>;
   deleteProperty(id: number, userId: string): Promise<void>;
@@ -206,6 +207,17 @@ export class DynamoStorage implements IStorage {
       const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return tb - ta;
     });
+  }
+
+  async countCallsToday(userId: string): Promise<number> {
+    const todayPrefix = new Date().toISOString().slice(0, 10);
+    const result = await docClient.send(new ScanCommand({
+      TableName: TABLES.calls,
+      FilterExpression: "userId = :uid AND begins_with(createdAt, :today)",
+      ExpressionAttributeValues: { ":uid": userId, ":today": todayPrefix },
+      Select: "COUNT",
+    }));
+    return result.Count ?? 0;
   }
 
   async createCall(call: InsertCall, userId: string): Promise<Call> {

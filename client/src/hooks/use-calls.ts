@@ -32,10 +32,12 @@ export function useCreateCall() {
       });
       
       if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error("Property not found");
-        }
-        throw new Error("Failed to initiate call");
+        let message = "Failed to initiate call";
+        try {
+          const body = await res.json();
+          if (body?.message) message = body.message;
+        } catch {}
+        throw new Error(message);
       }
       
       return await res.json();
@@ -65,6 +67,14 @@ export function useCallAll() {
   return useMutation({
     mutationFn: async () => {
       const res = await apiRequest(api.calls.callAll.method, api.calls.callAll.path);
+      if (!res.ok) {
+        let message = "Something went wrong. Please try again.";
+        try {
+          const body = await res.json();
+          if (body?.message) message = body.message;
+        } catch {}
+        throw new Error(message);
+      }
       return res.json() as Promise<{ initiated: number; errors: number }>;
     },
     onSuccess: (data) => {
@@ -74,10 +84,10 @@ export function useCallAll() {
       });
       queryClient.invalidateQueries({ queryKey: [api.calls.list.path] });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Failed to initiate calls",
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
         variant: "destructive",
       });
     },
