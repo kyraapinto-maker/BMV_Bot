@@ -12,7 +12,7 @@ export function useCalls() {
       const data = await res.json();
       return api.calls.list.responses[200].parse(data);
     },
-    refetchInterval: 5000,
+    refetchInterval: 10000,
     refetchOnWindowFocus: true,
   });
 }
