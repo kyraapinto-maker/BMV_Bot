@@ -155,7 +155,6 @@ export default function CallHistory() {
                   <TableHead className="font-semibold">Call Status</TableHead>
                   <TableHead className="font-semibold">Connection</TableHead>
                   <TableHead className="font-semibold">Next Action</TableHead>
-                  <TableHead className="font-semibold">Result</TableHead>
                   <TableHead className="font-semibold">Offered Price</TableHead>
                   <TableHead className="font-semibold text-center">Summary</TableHead>
                   <TableHead className="font-semibold">Viewing Date</TableHead>
@@ -202,7 +201,6 @@ export default function CallHistory() {
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
-                    <TableCell>{getResultBadge(call.result)}</TableCell>
                     <TableCell>
                       {call.offeredPrice ? (
                         <div className="flex items-center gap-1.5 text-foreground font-semibold">
@@ -244,7 +242,7 @@ export default function CallHistory() {
                       {call.viewingDate ? (
                         <div className="flex items-center gap-2 text-primary font-medium bg-primary/5 px-3 py-1.5 rounded-md inline-flex border border-primary/10">
                           <CalendarDays className="w-4 h-4" />
-                          {format(new Date(call.viewingDate), "MMM d, yyyy")}
+                          {format(new Date(call.viewingDate), "MMM d, yyyy, HH:mm")}
                         </div>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
