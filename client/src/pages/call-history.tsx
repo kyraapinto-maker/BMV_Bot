@@ -153,6 +153,8 @@ export default function CallHistory() {
                   <TableHead className="font-semibold w-[180px]">Date</TableHead>
                   <TableHead className="font-semibold">Property</TableHead>
                   <TableHead className="font-semibold">Call Status</TableHead>
+                  <TableHead className="font-semibold">Connection</TableHead>
+                  <TableHead className="font-semibold">Next Action</TableHead>
                   <TableHead className="font-semibold">Result</TableHead>
                   <TableHead className="font-semibold">Offered Price</TableHead>
                   <TableHead className="font-semibold text-center">Summary</TableHead>
@@ -186,6 +188,20 @@ export default function CallHistory() {
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(call.status)}</TableCell>
+                    <TableCell>
+                      {call.connection ? (
+                        <span className="text-sm text-foreground">{call.connection}</span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {call.nextAction ? (
+                        <span className="text-sm text-foreground">{call.nextAction}</span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>{getResultBadge(call.result)}</TableCell>
                     <TableCell>
                       {call.offeredPrice ? (

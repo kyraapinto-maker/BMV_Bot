@@ -96,6 +96,46 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/properties/from-url", isAuthenticated, async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url || typeof url !== "string") {
+        return res.status(400).json({ message: "A valid URL is required" });
+      }
+
+      const lambdaRes = await fetch(
+        "https://tiui4gsyaup4x2zong3evcnzvm0hposx.lambda-url.us-east-1.on.aws/scrape-url",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        }
+      );
+
+      if (!lambdaRes.ok) {
+        const text = await lambdaRes.text();
+        throw new Error(`Scraper returned ${lambdaRes.status}: ${text}`);
+      }
+
+      const data = await lambdaRes.json();
+      const body = { ...data };
+
+      if (typeof body.price === "string") body.price = Number(body.price.replace(/[^0-9.]/g, ""));
+      if (typeof body.daysOnMarket === "string") body.daysOnMarket = Number(body.daysOnMarket);
+      if (typeof body.num_beds === "string") body.num_beds = Number(body.num_beds);
+      if (body.num_bed !== undefined && body.num_beds === undefined) body.num_beds = body.num_bed;
+
+      const input = api.properties.create.input.parse(body);
+      const property = await storage.createProperty(input, userId(req));
+      res.status(201).json(property);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join(".") });
+      }
+      res.status(500).json({ message: err instanceof Error ? err.message : "Internal Server Error" });
+    }
+  });
+
   app.delete(api.properties.delete.path, isAuthenticated, async (req, res) => {
     const id = Number(req.params.id);
     await storage.deleteProperty(id, userId(req));

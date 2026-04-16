@@ -51,6 +51,8 @@ export const calls = pgTable("calls", {
   propertyUniqueIndex: text("property_unique_index"),
   status: text("status"),
   result: text("result"),
+  connection: text("connection"),
+  nextAction: text("next_action"),
   offeredPrice: integer("offered_price"),
   comment: text("comment"),
   viewingDate: timestamp("viewing_date"),

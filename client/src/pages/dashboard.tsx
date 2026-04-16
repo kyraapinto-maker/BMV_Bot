@@ -1,16 +1,45 @@
+import { useState } from "react";
 import { useProperties } from "@/hooks/use-properties";
 import { useCallAll, useCalls } from "@/hooks/use-calls";
 import { PropertyCard } from "@/components/property-card";
-import { Building, Sparkles, PhoneForwarded, Loader2 } from "lucide-react";
+import { Building, Sparkles, PhoneForwarded, Loader2, Link2, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { api } from "@shared/routes";
 
 export default function Dashboard() {
   const { data: properties, isLoading, error } = useProperties();
   const callAll = useCallAll();
   const { data: calls } = useCalls();
+  const { toast } = useToast();
+
+  const [listingUrl, setListingUrl] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
 
   const calledPropertyIds = new Set((calls ?? []).map((c) => c.propertyId));
+
+  const handleImportUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!listingUrl.trim()) return;
+    setIsImporting(true);
+    try {
+      await apiRequest("POST", "/api/properties/from-url", { url: listingUrl.trim() });
+      queryClient.invalidateQueries({ queryKey: [api.properties.list.path] });
+      setListingUrl("");
+      toast({ title: "Property imported", description: "The listing has been added to your dashboard." });
+    } catch (err) {
+      toast({
+        title: "Import failed",
+        description: err instanceof Error ? err.message : "Could not import this listing.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -47,6 +76,24 @@ export default function Dashboard() {
             </Button>
           )}
         </div>
+
+        <form onSubmit={handleImportUrl} className="flex gap-3 max-w-2xl mt-2">
+          <div className="relative flex-1">
+            <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="url"
+              placeholder="Paste a Rightmove or Zoopla listing URL to import…"
+              value={listingUrl}
+              onChange={(e) => setListingUrl(e.target.value)}
+              className="pl-9 h-11"
+              data-testid="input-listing-url"
+            />
+          </div>
+          <Button type="submit" disabled={isImporting || !listingUrl.trim()} className="h-11 gap-2 shrink-0" data-testid="button-import-url">
+            {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            {isImporting ? "Importing…" : "Import"}
+          </Button>
+        </form>
       </div>
 
       {isLoading ? (
@@ -78,7 +125,7 @@ export default function Dashboard() {
           </div>
           <h3 className="text-xl font-bold text-foreground">No opportunities found</h3>
           <p className="text-muted-foreground mt-2 text-center max-w-sm">
-            We couldn't find any properties matching your criteria at the moment. The scraper might still be running.
+            Paste a listing URL above or use the Sourcing page to find properties.
           </p>
         </div>
       ) : (
