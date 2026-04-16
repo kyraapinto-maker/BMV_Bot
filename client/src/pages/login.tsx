@@ -79,7 +79,7 @@ export default function Login() {
                     <FormControl>
                       <Input
                         type="text"
-                        placeholder="you@example.com or admin"
+                        placeholder="you@example.com"
                         data-testid="input-email"
                         {...field}
                       />
