@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Plus, Building, Loader2, LayoutDashboard, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Building, Loader2, LayoutDashboard, CheckCircle2, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,13 +9,40 @@ import { api } from "@shared/routes";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Property } from "@shared/schema";
 
+const SESSION_KEY_POSTCODE = "sourcing_postcode";
+const SESSION_KEY_RESULTS = "sourcing_results";
+const SESSION_KEY_ADDED = "sourcing_added";
+
+function readSession<T>(key: string, fallback: T): T {
+  try {
+    const raw = sessionStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function Sourcing() {
-  const [postcode, setPostcode] = useState("");
+  const [postcode, setPostcode] = useState<string>(() => readSession(SESSION_KEY_POSTCODE, ""));
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<Partial<Property>[]>([]);
-  const [addedIndices, setAddedIndices] = useState<Set<number>>(new Set());
+  const [results, setResults] = useState<Partial<Property>[]>(() => readSession(SESSION_KEY_RESULTS, []));
+  const [addedIndices, setAddedIndices] = useState<Set<number>>(
+    () => new Set<number>(readSession<number[]>(SESSION_KEY_ADDED, []))
+  );
   const [isAddingAll, setIsAddingAll] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_KEY_POSTCODE, JSON.stringify(postcode));
+  }, [postcode]);
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_KEY_RESULTS, JSON.stringify(results));
+  }, [results]);
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_KEY_ADDED, JSON.stringify([...addedIndices]));
+  }, [addedIndices]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,30 +199,45 @@ export default function Sourcing() {
                       <p className="text-sm text-muted-foreground font-medium mt-0.5">{prop.num_beds} bedrooms</p>
                     )}
                   </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
+                  <CardContent className="pt-4 space-y-3">
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
                       <Building className="w-4 h-4" />
                       <span>{prop.daysOnMarket} days on market</span>
                     </div>
-                    <Button
-                      onClick={() => handleAdd(prop, idx)}
-                      disabled={added}
-                      variant={added ? "secondary" : "default"}
-                      className="w-full h-11 rounded-xl"
-                      data-testid={`button-add-${idx}`}
-                    >
-                      {added ? (
-                        <>
-                          <CheckCircle2 className="w-5 h-5 mr-2" />
-                          Added
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-5 h-5 mr-2" />
-                          Add to Dashboard
-                        </>
+                    <div className="flex gap-2">
+                      {prop.link && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="shrink-0 rounded-xl"
+                          asChild
+                          data-testid={`button-link-${idx}`}
+                        >
+                          <a href={prop.link} target="_blank" rel="noopener noreferrer" aria-label="View listing">
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </Button>
                       )}
-                    </Button>
+                      <Button
+                        onClick={() => handleAdd(prop, idx)}
+                        disabled={added}
+                        variant={added ? "secondary" : "default"}
+                        className="flex-1 h-11 rounded-xl"
+                        data-testid={`button-add-${idx}`}
+                      >
+                        {added ? (
+                          <>
+                            <CheckCircle2 className="w-5 h-5 mr-2" />
+                            Added
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-5 h-5 mr-2" />
+                            Add to Dashboard
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               );
