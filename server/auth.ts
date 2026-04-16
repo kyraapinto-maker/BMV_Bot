@@ -33,7 +33,7 @@ class DynamoSessionStore extends session.Store {
       if (result.Item.expires && result.Item.expires < Date.now()) {
         return callback(null, null);
       }
-      callback(null, result.Item.data);
+      callback(null, JSON.parse(result.Item.data));
     } catch (err) {
       callback(err);
     }
@@ -46,7 +46,7 @@ class DynamoSessionStore extends session.Store {
       await docClient.send(
         new PutCommand({
           TableName: TABLES.sessions,
-          Item: { sid, data: sessionData, expires },
+          Item: { sid, data: JSON.stringify(sessionData), expires },
         })
       );
       callback();
