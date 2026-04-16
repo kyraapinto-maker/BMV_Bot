@@ -183,10 +183,15 @@ export default function CallHistory() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>{getStatusBadge(call.status)}</TableCell>
                     <TableCell>
-                      {call.connection ? (
-                        <span className="text-sm text-foreground">{call.connection}</span>
+                      {call.result
+                        ? <Badge variant="default" className="bg-green-500 hover:bg-green-600 shadow-none"><CheckCircle2 className="w-3 h-3 mr-1" /> Called</Badge>
+                        : getStatusBadge(call.status)
+                      }
+                    </TableCell>
+                    <TableCell>
+                      {call.result ? (
+                        <span className="text-sm text-foreground">{call.result}</span>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
