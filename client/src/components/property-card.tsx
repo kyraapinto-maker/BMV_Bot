@@ -9,6 +9,7 @@ import {
   Trash2,
   Loader2,
   MessageSquarePlus,
+  ArrowRight,
 } from "lucide-react";
 import {
   Card,
@@ -19,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { type Property } from "@shared/schema";
 import { useCreateCall } from "@/hooks/use-calls";
 import { useMutation } from "@tanstack/react-query";
@@ -29,12 +31,14 @@ import { api, buildUrl } from "@shared/routes";
 interface PropertyCardProps {
   property: Property;
   hasBeenCalled?: boolean;
+  nextAction?: string | null;
 }
 
-export function PropertyCard({ property, hasBeenCalled = false }: PropertyCardProps) {
+export function PropertyCard({ property, hasBeenCalled = false, nextAction }: PropertyCardProps) {
   const { toast } = useToast();
   const { mutate: initiateCall, isPending: isCalling } = useCreateCall();
   const [questions, setQuestions] = useState("");
+  const [nextActionOpen, setNextActionOpen] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -78,14 +82,40 @@ export function PropertyCard({ property, hasBeenCalled = false }: PropertyCardPr
           </div>
           <div className="flex flex-col gap-1.5 items-end shrink-0">
             {hasBeenCalled && (
-              <Badge
-                variant="secondary"
-                className="bg-green-500/10 text-green-700 hover:bg-green-500/20 border-green-500/20 font-semibold shadow-none"
-                data-testid={`badge-called-${property.id}`}
-              >
-                <PhoneCall className="w-3 h-3 mr-1" />
-                Called
-              </Badge>
+              <Popover open={nextActionOpen} onOpenChange={setNextActionOpen}>
+                <PopoverTrigger asChild>
+                  <span
+                    className="cursor-pointer"
+                    data-testid={`badge-called-${property.id}`}
+                    onMouseEnter={() => setNextActionOpen(true)}
+                    onMouseLeave={() => setNextActionOpen(false)}
+                    onClick={() => setNextActionOpen((v) => !v)}
+                  >
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-500/10 text-green-700 hover:bg-green-500/20 border-green-500/20 font-semibold shadow-none pointer-events-none select-none"
+                    >
+                      <PhoneCall className="w-3 h-3 mr-1" />
+                      Called
+                    </Badge>
+                  </span>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="bottom"
+                  align="end"
+                  className="w-64 p-3 text-sm"
+                  onMouseEnter={() => setNextActionOpen(true)}
+                  onMouseLeave={() => setNextActionOpen(false)}
+                >
+                  <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <ArrowRight className="w-3 h-3" />
+                    Next Action
+                  </p>
+                  <p className="text-foreground leading-snug">
+                    {nextAction?.trim() || "No next action recorded yet."}
+                  </p>
+                </PopoverContent>
+              </Popover>
             )}
             {property.needsWork && (
               <Badge

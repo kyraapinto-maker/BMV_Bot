@@ -21,6 +21,18 @@ export default function Dashboard() {
 
   const calledPropertyIds = new Set((calls ?? []).map((c) => c.propertyId));
 
+  const nextActionByPropertyId = new Map<number, string | null>(
+    (calls ?? [])
+      .slice()
+      .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+      .reduce((acc, c) => {
+        if (!acc.some(([id]) => id === c.propertyId)) {
+          acc.push([c.propertyId, c.nextAction ?? null]);
+        }
+        return acc;
+      }, [] as [number, string | null][])
+  );
+
   const handleImportUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!listingUrl.trim()) return;
@@ -135,6 +147,7 @@ export default function Dashboard() {
               key={property.id}
               property={property}
               hasBeenCalled={calledPropertyIds.has(property.id)}
+              nextAction={nextActionByPropertyId.get(property.id) ?? null}
             />
           ))}
         </div>
