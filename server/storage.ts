@@ -36,6 +36,7 @@ export interface IStorage {
   createUser(email: string, passwordHash: string): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserById(id: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
 }
 
 async function nextId(counterName: string): Promise<number> {
@@ -361,6 +362,16 @@ export class DynamoStorage implements IStorage {
       passwordHash: String(item.passwordHash),
       createdAt: item.createdAt ? new Date(item.createdAt as string) : null,
     };
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const result = await docClient.send(new ScanCommand({ TableName: TABLES.users }));
+    return (result.Items ?? []).map((item) => ({
+      id: String(item.id),
+      email: String(item.email),
+      passwordHash: String(item.passwordHash),
+      createdAt: item.createdAt ? new Date(item.createdAt as string) : null,
+    }));
   }
 }
 

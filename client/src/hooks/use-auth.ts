@@ -4,6 +4,8 @@ import { queryClient, apiRequest, getQueryFn } from "@/lib/queryClient";
 export interface AuthUser {
   id: string;
   email: string;
+  isAdmin?: boolean;
+  impersonating?: { id: string; email: string } | null;
 }
 
 export function useAuth() {
@@ -42,5 +44,38 @@ export function useLogout() {
       queryClient.setQueryData(["/api/auth/me"], null);
       queryClient.clear();
     },
+  });
+}
+
+export function useImpersonate() {
+  return useMutation({
+    mutationFn: (userId: string) =>
+      apiRequest("POST", `/api/admin/impersonate/${userId}`).then((r) => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
+  });
+}
+
+export function useStopImpersonate() {
+  return useMutation({
+    mutationFn: () =>
+      apiRequest("POST", "/api/admin/stop-impersonate").then((r) => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
+  });
+}
+
+export function useAdminUsers() {
+  return useQuery<{ id: string; email: string }[]>({
+    queryKey: ["/api/admin/users"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/users", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: false,
+    staleTime: 60 * 1000,
   });
 }

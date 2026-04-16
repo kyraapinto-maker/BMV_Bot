@@ -4,10 +4,17 @@ import { storage } from "./storage";
 import { ensureTables } from "./dynamo-setup";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { isAuthenticated } from "./auth";
+import { isAuthenticated, isAdminEmail } from "./auth";
 
 function userId(req: Request): string {
-  return (req.user as Express.User).id;
+  return req.session.impersonatedUserId ?? (req.user as Express.User).id;
+}
+
+function requireAdmin(req: Request, res: any, next: any) {
+  if (!isAdminEmail((req.user as Express.User).email)) {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  next();
 }
 
 export async function registerRoutes(
@@ -299,6 +306,31 @@ export async function registerRoutes(
         message: err instanceof Error ? err.message : "Internal Server Error",
       });
     }
+  });
+
+  app.get("/api/admin/users", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users.map((u) => ({ id: u.id, email: u.email })));
+    } catch (err) {
+      res.status(500).json({ message: err instanceof Error ? err.message : "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/admin/impersonate/:userId", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const target = await storage.getUserById(req.params.userId);
+      if (!target) return res.status(404).json({ message: "User not found" });
+      req.session.impersonatedUserId = target.id;
+      res.json({ id: target.id, email: target.email });
+    } catch (err) {
+      res.status(500).json({ message: err instanceof Error ? err.message : "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/admin/stop-impersonate", isAuthenticated, async (req, res) => {
+    delete req.session.impersonatedUserId;
+    res.json({ message: "Stopped impersonating" });
   });
 
   return httpServer;

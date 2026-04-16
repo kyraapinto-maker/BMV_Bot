@@ -21,6 +21,17 @@ declare global {
   }
 }
 
+declare module "express-session" {
+  interface SessionData {
+    impersonatedUserId?: string;
+  }
+}
+
+export function isAdminEmail(email: string): boolean {
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@bobthecaller.com";
+  return email === "admin" || email === adminEmail;
+}
+
 const SALT_ROUNDS = 12;
 
 class DynamoSessionStore extends session.Store {
@@ -181,11 +192,18 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/auth/me", (req: Request, res: Response) => {
+  app.get("/api/auth/me", async (req: Request, res: Response) => {
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    res.status(200).json({ id: req.user.id, email: req.user.email });
+    const admin = isAdminEmail(req.user.email);
+    const impersonatedUserId = req.session.impersonatedUserId;
+    let impersonating: { id: string; email: string } | null = null;
+    if (impersonatedUserId) {
+      const target = await storage.getUserById(impersonatedUserId);
+      if (target) impersonating = { id: target.id, email: target.email };
+    }
+    res.status(200).json({ id: req.user.id, email: req.user.email, isAdmin: admin, impersonating });
   });
 
   seedAdminUser();
