@@ -179,19 +179,19 @@ export class DynamoStorage implements IStorage {
   }
 
   async getCalls(userId: string): Promise<CallWithProperty[]> {
-    const userProperties = await this.getProperties(userId);
-    if (userProperties.length === 0) return [];
-
-    const propertyIdSet = new Set(userProperties.map((p) => p.id));
-    const propertyMap = new Map<number, Property>(userProperties.map((p) => [p.id, p]));
-
     const callsResult = await docClient.send(new ScanCommand({
       TableName: TABLES.calls,
+      FilterExpression: "userId = :uid",
+      ExpressionAttributeValues: { ":uid": userId },
     }));
+    const callItems = callsResult.Items ?? [];
 
-    const callItems = (callsResult.Items ?? []).filter(
-      (item) => propertyIdSet.has(item.propertyId as number)
-    );
+    const propertyIds = [...new Set(callItems.map((c) => c.propertyId as number))];
+    const propertyMap = new Map<number, Property>();
+    for (const pid of propertyIds) {
+      const prop = await this.getProperty(pid, userId);
+      if (prop) propertyMap.set(pid, prop);
+    }
 
     const result: CallWithProperty[] = callItems
       .map((item) => {
