@@ -190,7 +190,7 @@ export async function registerRoutes(
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ property_id: property.id, call_id: newCall.id }),
+                body: JSON.stringify({ property_id: property.id, call_id: newCall.id, user_id: uid }),
               }
             );
             initiated++;
@@ -237,7 +237,7 @@ export async function registerRoutes(
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ property_id: property.id, call_id: newCall.id, ...(questions ? { questions } : {}) }),
+          body: JSON.stringify({ property_id: property.id, call_id: newCall.id, user_id: uid, ...(questions ? { questions } : {}) }),
         },
       );
 
