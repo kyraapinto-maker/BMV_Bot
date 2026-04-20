@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, Building, Loader2, LayoutDashboard, CheckCircle2, ExternalLink } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Building,
+  Loader2,
+  LayoutDashboard,
+  CheckCircle2,
+  ExternalLink,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,11 +31,15 @@ function readSession<T>(key: string, fallback: T): T {
 }
 
 export default function Sourcing() {
-  const [postcode, setPostcode] = useState<string>(() => readSession(SESSION_KEY_POSTCODE, ""));
+  const [postcode, setPostcode] = useState<string>(() =>
+    readSession(SESSION_KEY_POSTCODE, ""),
+  );
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<Partial<Property>[]>(() => readSession(SESSION_KEY_RESULTS, []));
+  const [results, setResults] = useState<Partial<Property>[]>(() =>
+    readSession(SESSION_KEY_RESULTS, []),
+  );
   const [addedIndices, setAddedIndices] = useState<Set<number>>(
-    () => new Set<number>(readSession<number[]>(SESSION_KEY_ADDED, []))
+    () => new Set<number>(readSession<number[]>(SESSION_KEY_ADDED, [])),
   );
   const [isAddingAll, setIsAddingAll] = useState(false);
   const { toast } = useToast();
@@ -41,7 +53,10 @@ export default function Sourcing() {
   }, [results]);
 
   useEffect(() => {
-    sessionStorage.setItem(SESSION_KEY_ADDED, JSON.stringify([...addedIndices]));
+    sessionStorage.setItem(
+      SESSION_KEY_ADDED,
+      JSON.stringify([...addedIndices]),
+    );
   }, [addedIndices]);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -51,8 +66,10 @@ export default function Sourcing() {
     setAddedIndices(new Set());
     try {
       const res = await fetch(
-        "https://tiui4gsyaup4x2zong3evcnzvm0hposx.lambda-url.us-east-1.on.aws/" +
-          `?postcode=${encodeURIComponent(postcode)}`,
+        // "https://tiui4gsyaup4x2zong3evcnzvm0hposx.lambda-url.us-east-1.on.aws/" +
+        //   `?postcode=${encodeURIComponent(postcode)}`, // Kyra Rightmove Scraper
+        "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/" +
+          `?postcode=${encodeURIComponent(postcode)}`, // Property Data Scraper
       );
       if (!res.ok) throw new Error("Search failed");
       const data = await res.json();
@@ -82,9 +99,16 @@ export default function Sourcing() {
     if (ok) {
       setAddedIndices((prev) => new Set(prev).add(idx));
       queryClient.invalidateQueries({ queryKey: [api.properties.list.path] });
-      toast({ title: "Property added", description: "Listing has been added to your dashboard." });
+      toast({
+        title: "Property added",
+        description: "Listing has been added to your dashboard.",
+      });
     } else {
-      toast({ title: "Failed to add", description: "Could not add this property.", variant: "destructive" });
+      toast({
+        title: "Failed to add",
+        description: "Could not add this property.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -94,7 +118,9 @@ export default function Sourcing() {
       .map((prop, idx) => ({ prop, idx }))
       .filter(({ idx }) => !addedIndices.has(idx));
 
-    const results2 = await Promise.all(unadded.map(({ prop }) => addProperty(prop)));
+    const results2 = await Promise.all(
+      unadded.map(({ prop }) => addProperty(prop)),
+    );
 
     const newAdded = new Set(addedIndices);
     let successCount = 0;
@@ -115,7 +141,10 @@ export default function Sourcing() {
         description: `${successCount} listing${successCount !== 1 ? "s" : ""} added to your dashboard.`,
       });
     } else {
-      toast({ title: "Nothing to add", description: "All properties are already on your dashboard." });
+      toast({
+        title: "Nothing to add",
+        description: "All properties are already on your dashboard.",
+      });
     }
   };
 
@@ -124,7 +153,9 @@ export default function Sourcing() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold font-display text-foreground">Sourcing</h1>
+        <h1 className="text-3xl font-bold font-display text-foreground">
+          Sourcing
+        </h1>
         <p className="text-muted-foreground text-lg">
           Search by postcode to find new opportunities to add to your dashboard.
         </p>
@@ -138,8 +169,18 @@ export default function Sourcing() {
           className="h-11"
           data-testid="input-postcode"
         />
-        <Button type="submit" size="lg" disabled={isSearching} className="h-11" data-testid="button-source">
-          {isSearching ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Search className="w-5 h-5 mr-2" />}
+        <Button
+          type="submit"
+          size="lg"
+          disabled={isSearching}
+          className="h-11"
+          data-testid="button-source"
+        >
+          {isSearching ? (
+            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+          ) : (
+            <Search className="w-5 h-5 mr-2" />
+          )}
           Source
         </Button>
       </form>
@@ -165,7 +206,11 @@ export default function Sourcing() {
               ) : (
                 <LayoutDashboard className="w-4 h-4" />
               )}
-              {isAddingAll ? "Adding…" : allAdded ? "All Added" : "Add All to Dashboard"}
+              {isAddingAll
+                ? "Adding…"
+                : allAdded
+                  ? "All Added"
+                  : "Add All to Dashboard"}
             </Button>
           </div>
 
@@ -181,22 +226,35 @@ export default function Sourcing() {
                   <CardHeader className="bg-muted/30 pb-3">
                     <div className="flex justify-between items-start gap-2">
                       {added ? (
-                        <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/20 font-semibold">
+                        <Badge
+                          variant="secondary"
+                          className="bg-green-500/10 text-green-700 border-green-500/20 font-semibold"
+                        >
                           <CheckCircle2 className="w-3 h-3 mr-1" />
                           Added
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="bg-primary/10 text-primary border-none font-semibold">
+                        <Badge
+                          variant="secondary"
+                          className="bg-primary/10 text-primary border-none font-semibold"
+                        >
                           Potential
                         </Badge>
                       )}
                       <span className="text-xl font-bold text-foreground">
-                        £{typeof prop.price === "number" ? prop.price.toLocaleString() : prop.price}
+                        £
+                        {typeof prop.price === "number"
+                          ? prop.price.toLocaleString()
+                          : prop.price}
                       </span>
                     </div>
-                    <CardTitle className="text-lg font-bold leading-tight mt-2">{prop.address}</CardTitle>
+                    <CardTitle className="text-lg font-bold leading-tight mt-2">
+                      {prop.address}
+                    </CardTitle>
                     {prop.num_beds != null && (
-                      <p className="text-sm text-muted-foreground font-medium mt-0.5">{prop.num_beds} bedrooms</p>
+                      <p className="text-sm text-muted-foreground font-medium mt-0.5">
+                        {prop.num_beds} bedrooms
+                      </p>
                     )}
                   </CardHeader>
                   <CardContent className="pt-4 space-y-3">
@@ -213,7 +271,12 @@ export default function Sourcing() {
                           asChild
                           data-testid={`button-link-${idx}`}
                         >
-                          <a href={prop.link} target="_blank" rel="noopener noreferrer" aria-label="View listing">
+                          <a
+                            href={prop.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="View listing"
+                          >
                             <ExternalLink className="w-4 h-4" />
                           </a>
                         </Button>
