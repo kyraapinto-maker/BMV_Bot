@@ -66,10 +66,10 @@ export default function Sourcing() {
     setAddedIndices(new Set());
     try {
       const res = await fetch(
-        // "https://tiui4gsyaup4x2zong3evcnzvm0hposx.lambda-url.us-east-1.on.aws/" +
-        //   `?postcode=${encodeURIComponent(postcode)}`, // Kyra Rightmove Scraper
-        "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/" +
-          `?postcode=${encodeURIComponent(postcode)}`, // Property Data Scraper
+        "https://tiui4gsyaup4x2zong3evcnzvm0hposx.lambda-url.us-east-1.on.aws/" +
+          `?postcode=${encodeURIComponent(postcode)}`, // Kyra Rightmove Scraper
+        // "https://czf7lucz4pn37ehngkrlcmarye0dxccr.lambda-url.us-east-1.on.aws/" +
+        //   `?postcode=${encodeURIComponent(postcode)}`, // Property Data Scraper
       );
       if (!res.ok) throw new Error("Search failed");
       const data = await res.json();

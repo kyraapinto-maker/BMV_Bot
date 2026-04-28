@@ -2,7 +2,14 @@ import { useState } from "react";
 import { useProperties } from "@/hooks/use-properties";
 import { useCallAll, useCalls } from "@/hooks/use-calls";
 import { PropertyCard } from "@/components/property-card";
-import { Building, Sparkles, PhoneForwarded, Loader2, Link2, Plus } from "lucide-react";
+import {
+  Building,
+  Sparkles,
+  PhoneForwarded,
+  Loader2,
+  Link2,
+  Plus,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,13 +31,20 @@ export default function Dashboard() {
   const nextActionByPropertyId = new Map<number, string | null>(
     (calls ?? [])
       .slice()
-      .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
-      .reduce((acc, c) => {
-        if (!acc.some(([id]) => id === c.propertyId)) {
-          acc.push([c.propertyId, c.nextAction ?? null]);
-        }
-        return acc;
-      }, [] as [number, string | null][])
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt ?? 0).getTime() -
+          new Date(a.createdAt ?? 0).getTime(),
+      )
+      .reduce(
+        (acc, c) => {
+          if (!acc.some(([id]) => id === c.propertyId)) {
+            acc.push([c.propertyId, c.nextAction ?? null]);
+          }
+          return acc;
+        },
+        [] as [number, string | null][],
+      ),
   );
 
   const handleImportUrl = async (e: React.FormEvent) => {
@@ -38,14 +52,20 @@ export default function Dashboard() {
     if (!listingUrl.trim()) return;
     setIsImporting(true);
     try {
-      await apiRequest("POST", "/api/properties/from-url", { url: listingUrl.trim() });
+      await apiRequest("POST", "/api/properties/from-url", {
+        url: listingUrl.trim(),
+      });
       queryClient.invalidateQueries({ queryKey: [api.properties.list.path] });
       setListingUrl("");
-      toast({ title: "Property imported", description: "The listing has been added to your dashboard." });
+      toast({
+        title: "Property imported",
+        description: "The listing has been added to your dashboard.",
+      });
     } catch (err) {
       toast({
         title: "Import failed",
-        description: err instanceof Error ? err.message : "Could not import this listing.",
+        description:
+          err instanceof Error ? err.message : "Could not import this listing.",
         variant: "destructive",
       });
     } finally {
@@ -67,7 +87,8 @@ export default function Dashboard() {
               </h1>
             </div>
             <p className="text-muted-foreground text-lg max-w-2xl">
-              Properties stuck on the market that require modernization. Review and instruct the AI to call agencies.
+              Properties stuck on the market that require modernization. Review
+              and instruct the AI to call agencies.
             </p>
           </div>
 
@@ -94,15 +115,24 @@ export default function Dashboard() {
             <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="url"
-              placeholder="Paste a Rightmove or Zoopla listing URL to import…"
+              placeholder="Paste a Rightmove / Zoopla / OnTheMarket listing URL to import…"
               value={listingUrl}
               onChange={(e) => setListingUrl(e.target.value)}
               className="pl-9 h-11"
               data-testid="input-listing-url"
             />
           </div>
-          <Button type="submit" disabled={isImporting || !listingUrl.trim()} className="h-11 gap-2 shrink-0" data-testid="button-import-url">
-            {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          <Button
+            type="submit"
+            disabled={isImporting || !listingUrl.trim()}
+            className="h-11 gap-2 shrink-0"
+            data-testid="button-import-url"
+          >
+            {isImporting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
             {isImporting ? "Importing…" : "Import"}
           </Button>
         </form>
@@ -111,7 +141,10 @@ export default function Dashboard() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="rounded-2xl border border-border bg-card p-5 space-y-4">
+            <div
+              key={i}
+              className="rounded-2xl border border-border bg-card p-5 space-y-4"
+            >
               <div className="space-y-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-6 w-3/4" />
@@ -128,16 +161,21 @@ export default function Dashboard() {
       ) : error ? (
         <div className="p-8 text-center bg-destructive/5 rounded-2xl border border-destructive/20 text-destructive">
           <p className="font-semibold">Failed to load properties.</p>
-          <p className="text-sm mt-1 opacity-80">Please check your connection or try again later.</p>
+          <p className="text-sm mt-1 opacity-80">
+            Please check your connection or try again later.
+          </p>
         </div>
       ) : !properties?.length ? (
         <div className="flex flex-col items-center justify-center p-16 bg-card border border-border/50 rounded-3xl shadow-sm">
           <div className="bg-muted p-4 rounded-full mb-4">
             <Building className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-bold text-foreground">No opportunities found</h3>
+          <h3 className="text-xl font-bold text-foreground">
+            No opportunities found
+          </h3>
           <p className="text-muted-foreground mt-2 text-center max-w-sm">
-            Paste a listing URL above or use the Sourcing page to find properties.
+            Paste a listing URL above or use the Sourcing page to find
+            properties.
           </p>
         </div>
       ) : (
